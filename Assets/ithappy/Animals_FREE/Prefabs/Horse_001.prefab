@@ -772,7 +772,7 @@ MonoBehaviour:
   m_EatingDuration: 3
   m_FoodLayerMask:
     serializedVersion: 2
-    m_Bits: 4294967291
+    m_Bits: 51
   m_FoodNameKeywords:
   - Hay
   - Feeder

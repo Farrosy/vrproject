@@ -2,18 +2,43 @@ using UnityEngine;
 
 public class FeedingTrough : MonoBehaviour
 {
+    [Header("UI Elements")]
+    public GameObject feedCanvas; 
+
+    [Header("Food & Animals Settings")]
     public GameObject[] foodMeshes; 
-    // SEKARANG MENGGUNAKAN [] AGAR BISA MENAMPUNG BANYAK SAPI SEKALIGUS
-    public AnimalWander[] targetAnimals; 
+    public AnimalWander[] targetAnimals; // Kembali pakai AnimalWander
     
     private bool isPlayerNearby = false;
     private int currentFoodIndex = 0; 
+
+    void Start()
+    {
+        if (feedCanvas == null)
+        {
+            Canvas childCanvas = GetComponentInChildren<Canvas>(true);
+            if (childCanvas != null)
+            {
+                feedCanvas = childCanvas.gameObject;
+            }
+        }
+
+        if (feedCanvas != null)
+        {
+            feedCanvas.SetActive(false);
+        }
+    }
 
     void Update()
     {
         if (isPlayerNearby && Input.GetKeyDown(KeyCode.E) && currentFoodIndex < foodMeshes.Length)
         {
             FillOneFood();
+        }
+
+        if (isPlayerNearby && feedCanvas != null)
+        {
+            feedCanvas.transform.LookAt(feedCanvas.transform.position + Camera.main.transform.forward);
         }
     }
 
@@ -22,10 +47,8 @@ public class FeedingTrough : MonoBehaviour
         foodMeshes[currentFoodIndex].SetActive(true);
         Debug.Log("Mengisi jerami ke-" + (currentFoodIndex + 1));
         
-        // Saat makanan pertama kali diisi, panggil SEMUA sapi di dalam daftar
         if (currentFoodIndex == 0 && targetAnimals != null)
         {
-            // Melakukan perulangan (loop) untuk menyuruh setiap sapi bergerak
             foreach (AnimalWander cow in targetAnimals)
             {
                 if (cow != null)
@@ -40,14 +63,16 @@ public class FeedingTrough : MonoBehaviour
         if (currentFoodIndex >= foodMeshes.Length)
         {
             Debug.Log("Tempat makanan sudah penuh!");
+            if (feedCanvas != null) feedCanvas.SetActive(false);
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && currentFoodIndex < foodMeshes.Length)
         {
             isPlayerNearby = true;
+            if (feedCanvas != null) feedCanvas.SetActive(true); 
         }
     }
 
@@ -56,6 +81,7 @@ public class FeedingTrough : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             isPlayerNearby = false;
+            if (feedCanvas != null) feedCanvas.SetActive(false); 
         }
     }
 }
