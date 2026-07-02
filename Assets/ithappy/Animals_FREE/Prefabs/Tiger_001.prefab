@@ -924,11 +924,11 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
+  - component: {fileID: 5883155896844355921}
   - component: {fileID: 6552451252865160180}
   - component: {fileID: 5883155896844355906}
   - component: {fileID: 5883155896844355907}
   - component: {fileID: 5883155896844355916}
-  - component: {fileID: 5883155896844355917}
   m_Layer: 0
   m_Name: Tiger_001
   m_TagString: Untagged
@@ -1016,26 +1016,6 @@ MonoBehaviour:
     body: 0.3
     head: 0.7
     eyes: 1
---- !u!114 &5883155896844355917
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5883155896844355918}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b2c67ce836140b4479603ebcf944cddd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalAxis: Horizontal
-  m_VerticalAxis: Vertical
-  m_JumpButton: Jump
-  m_RunKey: 304
-  m_Camera: {fileID: 0}
-  m_MouseX: Mouse X
-  m_MouseY: Mouse Y
-  m_MouseScroll: Mouse ScrollWheel
 --- !u!1 &6083925854692512673
 GameObject:
   m_ObjectHideFlags: 0
@@ -1325,3 +1305,32 @@ Transform:
   m_Father: {fileID: 6702820432624191146}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+
+--- !u!114 &5883155896844355921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5883155896844355918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38e394926ef14f9aa4ccd7963ce26f7c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_WanderRadius: 8
+  m_AreaRadius: 15
+  m_AreaCenter: {fileID: 0}
+  m_IdleTimeMin: 2
+  m_IdleTimeMax: 5
+  m_DetectionRadius: 12
+  m_TargetLayerMask: 1
+  m_TargetNameKeywords:
+  - Horse
+  - Cow
+  m_AttackRadius: 1.5
+  m_AttackDelay: 1.2
+  m_EatingTime: 3
+  m_WalkSpeed: 1
+  m_RunSpeed: 4
+  m_RotationSpeed: 180

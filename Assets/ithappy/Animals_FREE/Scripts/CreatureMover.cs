@@ -54,6 +54,13 @@ namespace ithappy.Animals_FREE
             m_Movement?.SetStats(m_WalkSpeed / 3.6f, m_RunSpeed / 3.6f, m_RotateSpeed, m_JumpHeight, m_Space);
         }
 
+        public void SetSpeeds(float walkSpeed, float rotateSpeed)
+        {
+            m_WalkSpeed = Mathf.Max(walkSpeed, 0f);
+            m_RotateSpeed = Mathf.Max(rotateSpeed, 0f);
+            m_Movement?.SetStats(m_WalkSpeed / 3.6f, m_RunSpeed / 3.6f, m_RotateSpeed, m_JumpHeight, m_Space);
+        }
+
         private void Awake()
         {
             m_Transform = transform;
