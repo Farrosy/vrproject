@@ -8,7 +8,7 @@ public class AnimalWander : MonoBehaviour
 
     private NavMeshAgent agent;
     private float timer;
-    private bool isEating = false; // Status apakah sapi sedang makan
+    private bool isEating = false; 
 
     void OnEnable()
     {
@@ -24,7 +24,6 @@ public class AnimalWander : MonoBehaviour
 
     void Update()
     {
-        // Jika sedang makan, jangan cari koordinat acak (diam di tempat makan)
         if (isEating) return;
 
         timer += Time.deltaTime;
@@ -37,13 +36,21 @@ public class AnimalWander : MonoBehaviour
         }
     }
 
-    // Fungsi baru untuk menyuruh sapi mendatangi tempat makan
     public void GoToFeeder(Vector3 feederPosition)
     {
         isEating = true; 
-        agent.SetDestination(feederPosition); // Sapi berjalan ke arah tempat makan
+        agent.SetDestination(feederPosition); 
         Debug.Log(gameObject.name + " mencium bau makanan dan mendekat!");
     }
+
+    // ==================== FUNGSI BARU UNTUK SAPI BISA JALAN LAGI ====================
+    public void ResumeWandering()
+    {
+        isEating = false;
+        timer = wanderTimer; // Paksa timer langsung penuh agar sapi langsung mencari koordinat wander baru
+        Debug.Log(gameObject.name + " makanan habis, kembali berkeliling!");
+    }
+    // ================================================================================
 
     public static Vector3 RandomNavSphere(Vector3 origin, float dist, int layermask)
     {
