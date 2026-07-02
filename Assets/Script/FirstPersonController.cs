@@ -8,20 +8,21 @@ public class FirstPersonController : MonoBehaviour
     public float gravity = -9.81f;
 
     [Header("Look Sensitivity")]
-    public float mouseSensitivity = 10f; // Nilai sensitivitas disesuaikan untuk sistem lama
+    public float mouseSensitivity = 10f; 
     public Transform cameraTransform;
-    public float upperLookLimit = -80f;
-    public float lowerLookLimit = 80f;
+    public float upperLookLimit = -40f; // Sudah disesuaikan agar tidak nembus badan
+    public float lowerLookLimit = 60f;
 
     private CharacterController characterController;
+    private Animator animator; // TAMBAHAN: Variabel untuk menyimpan komponen Animator
     private Vector3 velocity;
     private float verticalRotation = 0f;
 
     void Start()
     {
         characterController = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>(); // TAMBAHAN: Mengambil komponen Animator dari objek ini
         
-        // Mengunci kursor mouse di tengah layar
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -34,35 +35,35 @@ public class FirstPersonController : MonoBehaviour
 
     private void HandleMovement()
     {
-        // Memastikan karakter menyentuh tanah
         if (characterController.isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
         }
 
-        // Mengambil input WASD / Arrow Keys menggunakan metode lama
-        float moveX = Input.GetAxis("Horizontal"); // A/D atau Kiri/Kanan
-        float moveZ = Input.GetAxis("Vertical");   // W/S atau Atas/Bawah
+        float moveX = Input.GetAxis("Horizontal"); 
+        float moveZ = Input.GetAxis("Vertical");   
 
-        // Menghitung arah jalan berdasarkan arah hadap karakter
         Vector3 moveDirection = transform.right * moveX + transform.forward * moveZ;
         characterController.Move(moveDirection * moveSpeed * Time.deltaTime);
 
-        // Efek Gravitasi
+        bool isMoving = (moveX != 0 || moveZ != 0);
+
+        if (animator != null)
+        {
+            animator.SetBool("IsWalking", isMoving);
+        }
+
         velocity.y += gravity * Time.deltaTime;
         characterController.Move(velocity * Time.deltaTime);
     }
 
     private void HandleLook()
     {
-        // Mengambil input pergerakan Mouse menggunakan metode lama
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-        // 1. Rotasi Horizontal (Karakter berputar ke kiri/kanan bersama kamera)
         transform.Rotate(Vector3.up * mouseX);
 
-        // 2. Rotasi Vertical (Kamera mendongak ke atas/bawah)
         verticalRotation -= mouseY;
         verticalRotation = Mathf.Clamp(verticalRotation, upperLookLimit, lowerLookLimit);
 
