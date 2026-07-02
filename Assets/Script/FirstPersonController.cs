@@ -46,12 +46,20 @@ public class FirstPersonController : MonoBehaviour
         Vector3 moveDirection = transform.right * moveX + transform.forward * moveZ;
         characterController.Move(moveDirection * moveSpeed * Time.deltaTime);
 
-        bool isMoving = (moveX != 0 || moveZ != 0);
-
+        // ==================== LOGIKA BARU UNTUK ANIMASI MUNDUR ====================
         if (animator != null)
         {
-            animator.SetBool("IsWalking", isMoving);
+            // Jika moveZ lebih dari 0, artinya tekan W (Maju)
+            bool isMovingForward = (moveZ > 0.1f || (moveX != 0 && moveZ >= 0));
+            
+            // Jika moveZ kurang dari 0, artinya tekan S (Mundur)
+            bool isMovingBackward = (moveZ < -0.1f);
+
+            // Kirim data ke Animator
+            animator.SetBool("IsWalking", isMovingForward);
+            animator.SetBool("IsWalkingBackward", isMovingBackward);
         }
+        // ==========================================================================
 
         velocity.y += gravity * Time.deltaTime;
         characterController.Move(velocity * Time.deltaTime);
