@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections;
-using TMPro; // Pastikan ini ada untuk TextMeshPro
+using TMPro; 
 
 public class FeedingTrough : MonoBehaviour
 {
@@ -11,7 +11,12 @@ public class FeedingTrough : MonoBehaviour
     [Header("Highlight & UI Settings")]
     public MeshRenderer troughRenderer; 
     public Material highlightMaterial; 
-    public TextMeshProUGUI interactionText; // TAMBAHAN: Tarik UI Text World Space milik wadah ini ke sini
+    public TextMeshProUGUI interactionText; 
+    
+    // ==================== TAMBAHAN UNTUK TANDA SERU ====================
+    [Header("Alert Settings")]
+    public GameObject emptyAlertIcon; // Tarik objek Tanda Seru (UI/Sprite) dari wadah ini ke sini
+    // ===================================================================
 
     private int currentFoodIndex = 0; 
     private Material originalMaterial; 
@@ -24,20 +29,19 @@ public class FeedingTrough : MonoBehaviour
             originalMaterial = troughRenderer.material;
         }
 
-        // Sembunyikan text saat game dimulai
         if (interactionText != null)
         {
             interactionText.gameObject.SetActive(false);
         }
+
+        // TAMBAHAN: Saat start, karena wadah masih kosong, pastikan tanda seru menyala
+        UpdateAlertIcon();
     }
 
-    // Mengaktifkan efek cahaya DAN teks interaksi sekaligus
     public void ToggleHighlight(bool state)
     {
-        // 1. Logika Teks Interaksi
         if (interactionText != null)
         {
-            // Cek jumlah foodMeshes untuk menentukan teks yang sesuai
             if (foodMeshes != null && foodMeshes.Length == 1)
             {
                 interactionText.text = "Tekan [E] untuk Memberi Minuman";
@@ -47,11 +51,9 @@ public class FeedingTrough : MonoBehaviour
                 interactionText.text = "Tekan [E] untuk Memberi Makan";
             }
 
-            // Teks hanya muncul jika diaktifkan (true) DAN wadah belum penuh
             interactionText.gameObject.SetActive(state && !IsFull());
         }
 
-        // 2. Logika Material Glow
         if (troughRenderer == null || highlightMaterial == null) return;
         if (isHighlighted == state) return; 
 
@@ -77,7 +79,9 @@ public class FeedingTrough : MonoBehaviour
         StartCoroutine(ResetFoodAfterDelay(foodIndexToFill));
         currentFoodIndex++;
 
-        // Update status UI/Highlight setelah makanan bertambah (jika penuh, teks langsung hilang)
+        // TAMBAHAN: Update status tanda seru setelah diisi
+        UpdateAlertIcon();
+
         ToggleHighlight(isHighlighted);
     }
 
@@ -92,6 +96,9 @@ public class FeedingTrough : MonoBehaviour
 
         currentFoodIndex = Mathf.Max(0, currentFoodIndex - 1);
 
+        // TAMBAHAN: Update status tanda seru setelah makanan berkurang/habis
+        UpdateAlertIcon();
+
         if (currentFoodIndex == 0 && targetAnimals != null)
         {
             foreach (AnimalWander cow in targetAnimals)
@@ -105,4 +112,15 @@ public class FeedingTrough : MonoBehaviour
     {
         return currentFoodIndex >= foodMeshes.Length;
     }
+
+    // ==================== FUNGSI BARU UNTUK ATUR TANDA SERU ====================
+    private void UpdateAlertIcon()
+    {
+        if (emptyAlertIcon != null)
+        {
+            // Tanda seru AKTIF hanya jika wadah benar-benar kosong (currentFoodIndex == 0)
+            emptyAlertIcon.SetActive(currentFoodIndex == 0);
+        }
+    }
+    // ===========================================================================
 }
