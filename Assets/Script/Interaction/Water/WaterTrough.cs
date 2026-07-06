@@ -10,7 +10,7 @@ public class WaterTrough : MonoBehaviour
     [SerializeField] private GameObject _troughWaterMesh;
 
     [Header("Animals Settings")]
-    [Tooltip("Masukkan Game Object Sapi (AnimalWander) atau Kuda (HorseAI) ke sini")]
+    [Tooltip("Masukkan Game Object Sapi (AnimalWander), Kuda (HorseAI), atau Harimau (TigerAI) ke sini")]
     [SerializeField] private GameObject[] _targetAnimals;
 
     [Header("Highlight & UI Settings")]
@@ -93,14 +93,20 @@ public class WaterTrough : MonoBehaviour
             foreach (GameObject animal in _targetAnimals)
             {
                 if (animal == null) continue;
+                
+                // Cek Sapi
                 if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.GoToFeeder(transform.position);
+                // Cek Kuda
                 else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.GoToFeeder(transform.position);
+                // ==================== FIX: PANGGIL HARIMAU SAAT AIR DITUANG ====================
+                else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.GoToFeeder(transform.position);
+                // ===============================================================================
             }
         }
 
         // 4. Mulai timer 5 detik air surut/habis
         StartCoroutine(ResetWaterAfterDelay(5f));
-        Debug.Log("Air berhasil dituang mendalam! Sapi bergerak mendekat.");
+        Debug.Log("Air berhasil dituang mendalam! Harimau/Hewan bergerak mendekat.");
     }
 
     private IEnumerator ResetWaterAfterDelay(float duration)
@@ -120,8 +126,14 @@ public class WaterTrough : MonoBehaviour
             foreach (GameObject animal in _targetAnimals)
             {
                 if (animal == null) continue;
+                
+                // Bubarkan Sapi
                 if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.ResumeWandering();
+                // Bubarkan Kuda
                 else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.ResumeWandering();
+                // ==================== FIX: BUBARKAN HARIMAU SAAT AIR HABIS ====================
+                else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.ResumeWandering();
+                // ==============================================================================
             }
         }
         

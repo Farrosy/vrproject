@@ -832,11 +832,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_RotateSpeed
-      value: 342
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Name
-      value: Tiger_001
+      value: Tiger_001 w
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
@@ -5505,7 +5505,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_RotateSpeed
-      value: 342
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Name
@@ -6731,7 +6731,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_RotateSpeed
-      value: 342
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Name
@@ -8968,10 +8968,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FeedingTrough
   targetAnimals:
+  - {fileID: 679735086}
   - {fileID: 109930796}
   - {fileID: 1826246484}
   - {fileID: 818716967}
-  - {fileID: 679735086}
   troughRenderer: {fileID: 958918517}
   highlightMaterial: {fileID: 2100000, guid: e2c4d429f5ea1c2f5bf002413dc2f6f3, type: 2}
   interactionText: {fileID: 953027579}
@@ -11562,7 +11562,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_RotateSpeed
-      value: 342
+      value: 180
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Name
