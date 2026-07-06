@@ -1,21 +1,39 @@
 using UnityEngine;
 using System.Collections;
-using TMPro; // Pastikan ini ada untuk TextMeshPro
+using UnityEngine.UI; 
+using TMPro; 
+using ithappy.Animals_FREE; 
 
 public class FeedingTrough : MonoBehaviour
 {
-    [Header("Food Settings")]
-    public GameObject[] foodMeshes; 
-    public AnimalWander[] targetAnimals; 
+    [Header("Animals Settings")]
+    [Tooltip("Masukkan Game Object Sapi (AnimalWander) or Kuda (HorseAI) ke sini")]
+    public GameObject[] targetAnimals; 
     
     [Header("Highlight & UI Settings")]
     public MeshRenderer troughRenderer; 
     public Material highlightMaterial; 
-    public TextMeshProUGUI interactionText; // TAMBAHAN: Tarik UI Text World Space milik wadah ini ke sini
+    public TextMeshProUGUI interactionText; 
+    
+    [Header("Alert Settings")]
+    public GameObject emptyAlertIcon;
 
-    private int currentFoodIndex = 0; 
+    [Header("Audio Settings")]
+    public AudioSource eatingAudioSource; 
+
+    [Header("Hunger System Settings")]
+    public Slider hungerSlider;
+    public TextMeshProUGUI statusText;
+
+    private float maxHunger = 10f;
+    private float currentHunger = 0f; 
+    private float hungerDecreaseTimer = 0f;
+    private const float DECREASE_INTERVAL = 5f; 
+
     private Material originalMaterial; 
     private bool isHighlighted = false;
+    
+    private GameObject activeDroppedFood = null;
 
     void Start()
     {
@@ -24,85 +42,156 @@ public class FeedingTrough : MonoBehaviour
             originalMaterial = troughRenderer.material;
         }
 
-        // Sembunyikan text saat game dimulai
         if (interactionText != null)
         {
             interactionText.gameObject.SetActive(false);
         }
-    }
 
-    // Mengaktifkan efek cahaya DAN teks interaksi sekaligus
-    public void ToggleHighlight(bool state)
-    {
-        // 1. Logika Teks Interaksi
-        if (interactionText != null)
+        currentHunger = 0f; 
+        if (hungerSlider != null)
         {
-            // Cek jumlah foodMeshes untuk menentukan teks yang sesuai
-            if (foodMeshes != null && foodMeshes.Length == 1)
-            {
-                interactionText.text = "Tekan [E] untuk Memberi Minuman";
-            }
-            else
-            {
-                interactionText.text = "Tekan [E] untuk Memberi Makan";
-            }
-
-            // Teks hanya muncul jika diaktifkan (true) DAN wadah belum penuh
-            interactionText.gameObject.SetActive(state && !IsFull());
+            hungerSlider.maxValue = maxHunger;
+            hungerSlider.value = currentHunger;
         }
 
-        // 2. Logika Material Glow
-        if (troughRenderer == null || highlightMaterial == null) return;
-        if (isHighlighted == state) return; 
-
-        isHighlighted = state;
-        troughRenderer.material = isHighlighted ? highlightMaterial : originalMaterial;
+        UpdateAlertIcon();
     }
 
-    public void FillOneFood()
+    void Update()
     {
-        if (currentFoodIndex >= foodMeshes.Length) return;
-
-        int foodIndexToFill = currentFoodIndex;
-        foodMeshes[foodIndexToFill].SetActive(true);
-        
-        if (targetAnimals != null)
+        if (activeDroppedFood != null)
         {
-            foreach (AnimalWander cow in targetAnimals)
-            {
-                if (cow != null) cow.GoToFeeder(transform.position);
-            }
+            currentHunger = maxHunger;
+            if (hungerSlider != null) hungerSlider.value = currentHunger;
+            hungerDecreaseTimer = 0f; 
+            return;
         }
 
-        StartCoroutine(ResetFoodAfterDelay(foodIndexToFill));
-        currentFoodIndex++;
-
-        // Update status UI/Highlight setelah makanan bertambah (jika penuh, teks langsung hilang)
-        ToggleHighlight(isHighlighted);
-    }
-
-    private IEnumerator ResetFoodAfterDelay(int index)
-    {
-        yield return new WaitForSeconds(7f);
-
-        if (foodMeshes[index] != null)
+        if (currentHunger > 0f)
         {
-            foodMeshes[index].SetActive(false);
-        }
-
-        currentFoodIndex = Mathf.Max(0, currentFoodIndex - 1);
-
-        if (currentFoodIndex == 0 && targetAnimals != null)
-        {
-            foreach (AnimalWander cow in targetAnimals)
+            hungerDecreaseTimer += Time.deltaTime;
+            if (hungerDecreaseTimer >= DECREASE_INTERVAL)
             {
-                if (cow != null) cow.ResumeWandering();
+                currentHunger = Mathf.Max(0f, currentHunger - 1f);
+                if (hungerSlider != null) hungerSlider.value = currentHunger;
+                
+                hungerDecreaseTimer = 0f;
+                UpdateAlertIcon();
             }
         }
     }
 
     public bool IsFull()
     {
-        return currentFoodIndex >= foodMeshes.Length;
+        return activeDroppedFood != null;
+    }
+
+    public void FillOneFood(GameObject foodObject)
+    {
+        if (currentHunger > 0f || activeDroppedFood != null) return;
+
+        activeDroppedFood = foodObject;
+
+        currentHunger = maxHunger;
+        if (hungerSlider != null) hungerSlider.value = currentHunger;
+
+        if (targetAnimals != null)
+        {
+            foreach (GameObject animal in targetAnimals)
+            {
+                if (animal == null) continue;
+
+                if (animal.TryGetComponent<AnimalWander>(out var cow))
+                {
+                    cow.GoToFeeder(transform.position);
+                }
+                else if (animal.TryGetComponent<HorseAI>(out var horse))
+                {
+                    horse.GoToFeeder(transform.position);
+                }
+            }
+        }
+
+        if (eatingAudioSource != null)
+        {
+            eatingAudioSource.Play();
+        }
+
+        StartCoroutine(ResetFoodAfterDelay(5f));
+        UpdateAlertIcon();
+    }
+
+    private IEnumerator ResetFoodAfterDelay(float delayDuration)
+    {
+        yield return new WaitForSeconds(delayDuration);
+
+        if (activeDroppedFood != null)
+        {
+            // ==================== FIX LOGIKA REPEAT DELIVERY ====================
+            // Beritahu DropZoneHandler di objek ini untuk membuka kembali sensornya
+            if (TryGetComponent<DropZoneHandler>(out var zone))
+            {
+                zone.ResetDropZone();
+            }
+            // ====================================================================
+
+            Destroy(activeDroppedFood);
+            activeDroppedFood = null;
+        }
+
+        UpdateAlertIcon();
+
+        if (targetAnimals != null)
+        {
+            foreach (GameObject animal in targetAnimals)
+            {
+                if (animal == null) continue;
+
+                if (animal.TryGetComponent<AnimalWander>(out var cow))
+                {
+                    cow.ResumeWandering();
+                }
+                else if (animal.TryGetComponent<HorseAI>(out var horse))
+                {
+                    horse.ResumeWandering();
+                }
+            }
+        }
+
+        if (eatingAudioSource != null)
+        {
+            eatingAudioSource.Stop();
+        }
+    }
+
+    public void ToggleHighlight(bool state)
+    {
+        isHighlighted = state;
+        if (troughRenderer == null || highlightMaterial == null) return;
+        troughRenderer.material = isHighlighted ? highlightMaterial : originalMaterial;
+    }
+
+    private void UpdateAlertIcon()
+    {
+        if (emptyAlertIcon != null)
+        {
+            emptyAlertIcon.SetActive(currentHunger <= 0f && !isHighlighted);
+        }
+
+        if (statusText != null)
+        {
+            statusText.text = "Lapar!";
+            statusText.gameObject.SetActive(currentHunger <= 0f);
+        }
+
+        if (hungerSlider != null && hungerSlider.fillRect != null)
+        {
+            Image fillImage = hungerSlider.fillRect.GetComponent<Image>();
+            if (fillImage != null)
+            {
+                float hungerPercentage = currentHunger / maxHunger;
+                fillImage.color = Color.Lerp(Color.red, Color.green, hungerPercentage);
+            }
+        }
     }
 }
