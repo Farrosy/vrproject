@@ -7,7 +7,7 @@ using ithappy.Animals_FREE;
 public class FeedingTrough : MonoBehaviour
 {
     [Header("Animals Settings")]
-    [Tooltip("Masukkan Game Object Sapi (AnimalWander) or Kuda (HorseAI) ke sini")]
+    [Tooltip("Masukkan Game Object Sapi (AnimalWander), Kuda (HorseAI), atau Harimau (TigerAI) ke sini")]
     public GameObject[] targetAnimals; 
     
     [Header("Highlight & UI Settings")]
@@ -101,14 +101,22 @@ public class FeedingTrough : MonoBehaviour
             {
                 if (animal == null) continue;
 
+                // 1. Cek Komponen Sapi
                 if (animal.TryGetComponent<AnimalWander>(out var cow))
                 {
                     cow.GoToFeeder(transform.position);
                 }
+                // 2. Cek Komponen Kuda
                 else if (animal.TryGetComponent<HorseAI>(out var horse))
                 {
                     horse.GoToFeeder(transform.position);
                 }
+                // ==================== FIX: PANGGIL HARIMAU KETIKA MAKANAN ADA ====================
+                else if (animal.TryGetComponent<TigerAI>(out var tiger))
+                {
+                    tiger.GoToFeeder(transform.position);
+                }
+                // =================================================================================
             }
         }
 
@@ -127,13 +135,10 @@ public class FeedingTrough : MonoBehaviour
 
         if (activeDroppedFood != null)
         {
-            // ==================== FIX LOGIKA REPEAT DELIVERY ====================
-            // Beritahu DropZoneHandler di objek ini untuk membuka kembali sensornya
             if (TryGetComponent<DropZoneHandler>(out var zone))
             {
                 zone.ResetDropZone();
             }
-            // ====================================================================
 
             Destroy(activeDroppedFood);
             activeDroppedFood = null;
@@ -147,14 +152,22 @@ public class FeedingTrough : MonoBehaviour
             {
                 if (animal == null) continue;
 
+                // 1. Bubarkan Sapi
                 if (animal.TryGetComponent<AnimalWander>(out var cow))
                 {
                     cow.ResumeWandering();
                 }
+                // 2. Bubarkan Kuda
                 else if (animal.TryGetComponent<HorseAI>(out var horse))
                 {
                     horse.ResumeWandering();
                 }
+                // ==================== FIX: BUBARKAN HARIMAU KETIKA MAKANAN HABIS ====================
+                else if (animal.TryGetComponent<TigerAI>(out var tiger))
+                {
+                    tiger.ResumeWandering();
+                }
+                // ====================================================================================
             }
         }
 
