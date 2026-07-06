@@ -1,5 +1,3 @@
-// BasicVRInteractionController.cs
-
 using TMPro;
 using UnityEngine;
 
@@ -33,6 +31,17 @@ public class BasicVRInteractionController : MonoBehaviour
     private Grabbable heldObject;
     private Grabbable currentGrabbable;
     private Pushable currentPushable;
+
+    // ==================== TAMBAHAN: FUNGSI AKSES AMBIL BARANG GENGGAMAN ====================
+    public GameObject GetHeldGameObject()
+    {
+        if (heldObject != null)
+        {
+            return heldObject.gameObject;
+        }
+        return null;
+    }
+    // =======================================================================================
 
     private void Awake()
     {
