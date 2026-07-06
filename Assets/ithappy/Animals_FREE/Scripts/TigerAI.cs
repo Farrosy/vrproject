@@ -54,6 +54,14 @@ namespace ithappy.Animals_FREE
         [SerializeField, Range(0f, 360f)]
         private float m_RotationSpeed = 180f;
 
+        // ==================== COOLDOWN / STUCK PROTECTION SYSTEM ====================
+        [Header("Stuck Protection")]
+        [Tooltip("Batas waktu (detik) hewan diam sebelum dianggap mentok")]
+        [SerializeField] private float m_StuckTimeout = 2.0f;
+        private Vector3 m_LastPosition;
+        private float m_StuckTimer;
+        // ============================================================================
+
         private CreatureMover m_Mover;
         private Collider[] m_OverlapBuffer = new Collider[32];
         private Transform m_TargetTransform;
@@ -79,6 +87,8 @@ namespace ithappy.Animals_FREE
             m_Mover = GetComponent<CreatureMover>();
             m_Mover.SetSpeeds(m_WalkSpeed, m_RotationSpeed);
             SetIdle();
+
+            m_LastPosition = transform.position;
         }
 
         private void Update()
@@ -93,6 +103,9 @@ namespace ithappy.Animals_FREE
                     SetDetect(nearestTarget);
                 }
             }
+
+            // [STUCK DETECTION LOGIC]: Periksa apakah hewan mentok rintangan saat bergerak
+            HandleStuckCheck(deltaTime);
 
             switch (m_State)
             {
@@ -172,6 +185,47 @@ namespace ithappy.Animals_FREE
 
             ApplyMovement();
         }
+
+        // ==================== FUNGSI BARU: EKSEKUSI CEK MENTOK PAGAR/OBJEK ====================
+        private void HandleStuckCheck(float deltaTime)
+        {
+            // Deteksi hanya bekerja saat status berjalan (Wander, Chase, Return, atau merayap saat Eat)
+            if (m_State == State.Wander || m_State == State.Chase || m_State == State.Return || m_State == State.Eat)
+            {
+                // Jika posisi sekarang sangat dekat dengan posisi frame lalu, berarti jalan di tempat
+                if (Vector3.Distance(transform.position, m_LastPosition) < 0.02f)
+                {
+                    m_StuckTimer += deltaTime;
+                    if (m_StuckTimer >= m_StuckTimeout)
+                    {
+                        Debug.LogWarning(gameObject.name + " mentok rintangan! Memaksa cari jalan memutar.");
+                        
+                        // Jika mentok pas ngejar mangsa, harimau dibikin bingung/idle dulu baru nyari target lagi
+                        if (m_State == State.Chase)
+                        {
+                            SetIdle();
+                        }
+                        else
+                        {
+                            // Jika mentok pas keliling biasa, langsung paksa cari arah koordinat baru secara acak
+                            PickWanderTarget();
+                        }
+                        m_StuckTimer = 0f;
+                    }
+                }
+                else
+                {
+                    m_StuckTimer = 0f; // Reset timer jika masih bisa melangkah maju
+                }
+            }
+            else
+            {
+                m_StuckTimer = 0f; // Reset jika sedang diam/makan
+            }
+
+            m_LastPosition = transform.position; // Simpan koordinat frame saat ini
+        }
+        // =====================================================================================
 
         private void OnValidate()
         {
