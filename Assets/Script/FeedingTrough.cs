@@ -1,15 +1,13 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.UI; 
 using TMPro; 
-using ithappy.Animals_FREE; // TAMBAHAN: Panggil namespace HorseAI milik asset pack
+using ithappy.Animals_FREE; 
 
 public class FeedingTrough : MonoBehaviour
 {
-    [Header("Food Settings")]
-    public GameObject[] foodMeshes; 
-    
-    // [MODIFIKASI AMAN]: Ubah tipe menjadi GameObject agar bisa menampung Sapi maupun Kuda sekaligus
-    [Tooltip("Masukkan Game Object Sapi (AnimalWander) atau Kuda (HorseAI) ke sini")]
+    [Header("Animals Settings")]
+    [Tooltip("Masukkan Game Object Sapi (AnimalWander) or Kuda (HorseAI) ke sini")]
     public GameObject[] targetAnimals; 
     
     [Header("Highlight & UI Settings")]
@@ -23,9 +21,19 @@ public class FeedingTrough : MonoBehaviour
     [Header("Audio Settings")]
     public AudioSource eatingAudioSource; 
 
-    private int currentFoodIndex = 0; 
+    [Header("Hunger System Settings")]
+    public Slider hungerSlider;
+    public TextMeshProUGUI statusText;
+
+    private float maxHunger = 10f;
+    private float currentHunger = 0f; 
+    private float hungerDecreaseTimer = 0f;
+    private const float DECREASE_INTERVAL = 5f; 
+
     private Material originalMaterial; 
     private bool isHighlighted = false;
+    
+    private GameObject activeDroppedFood = null;
 
     void Start()
     {
@@ -39,57 +47,64 @@ public class FeedingTrough : MonoBehaviour
             interactionText.gameObject.SetActive(false);
         }
 
+        currentHunger = 0f; 
+        if (hungerSlider != null)
+        {
+            hungerSlider.maxValue = maxHunger;
+            hungerSlider.value = currentHunger;
+        }
+
         UpdateAlertIcon();
     }
 
-    public void ToggleHighlight(bool state)
+    void Update()
     {
-        isHighlighted = state;
-
-        if (interactionText != null)
+        if (activeDroppedFood != null)
         {
-            if (isHighlighted)
+            currentHunger = maxHunger;
+            if (hungerSlider != null) hungerSlider.value = currentHunger;
+            hungerDecreaseTimer = 0f; 
+            return;
+        }
+
+        if (currentHunger > 0f)
+        {
+            hungerDecreaseTimer += Time.deltaTime;
+            if (hungerDecreaseTimer >= DECREASE_INTERVAL)
             {
-                if (foodMeshes != null && foodMeshes.Length == 1)
-                {
-                    interactionText.text = "Tekan [E] untuk Memberi Minuman";
-                }
-                else
-                {
-                    interactionText.text = "Tekan [E] untuk Memberi Makan";
-                }
-                interactionText.gameObject.SetActive(!IsFull());
-            }
-            else
-            {
+                currentHunger = Mathf.Max(0f, currentHunger - 1f);
+                if (hungerSlider != null) hungerSlider.value = currentHunger;
+                
+                hungerDecreaseTimer = 0f;
                 UpdateAlertIcon();
             }
         }
-
-        if (troughRenderer == null || highlightMaterial == null) return;
-        troughRenderer.material = isHighlighted ? highlightMaterial : originalMaterial;
     }
 
-    public void FillOneFood()
+    public bool IsFull()
     {
-        if (currentFoodIndex >= foodMeshes.Length) return;
+        return activeDroppedFood != null;
+    }
 
-        int foodIndexToFill = currentFoodIndex;
-        foodMeshes[foodIndexToFill].SetActive(true);
-        
-        // [MODIFIKASI AMAN]: Cek otomatis apakah target itu Sapi atau Kuda
+    public void FillOneFood(GameObject foodObject)
+    {
+        if (currentHunger > 0f || activeDroppedFood != null) return;
+
+        activeDroppedFood = foodObject;
+
+        currentHunger = maxHunger;
+        if (hungerSlider != null) hungerSlider.value = currentHunger;
+
         if (targetAnimals != null)
         {
             foreach (GameObject animal in targetAnimals)
             {
                 if (animal == null) continue;
 
-                // 1. Cek apakah ini Sapi (punya script AnimalWander)
                 if (animal.TryGetComponent<AnimalWander>(out var cow))
                 {
                     cow.GoToFeeder(transform.position);
                 }
-                // 2. Cek apakah ini Kuda (punya script HorseAI yang baru kita gabung)
                 else if (animal.TryGetComponent<HorseAI>(out var horse))
                 {
                     horse.GoToFeeder(transform.position);
@@ -102,29 +117,32 @@ public class FeedingTrough : MonoBehaviour
             eatingAudioSource.Play();
         }
 
-        StartCoroutine(ResetFoodAfterDelay(foodIndexToFill));
-        currentFoodIndex++;
-
+        StartCoroutine(ResetFoodAfterDelay(5f));
         UpdateAlertIcon();
-        ToggleHighlight(isHighlighted);
     }
 
-    private IEnumerator ResetFoodAfterDelay(int index)
+    private IEnumerator ResetFoodAfterDelay(float delayDuration)
     {
-        yield return new WaitForSeconds(7f);
+        yield return new WaitForSeconds(delayDuration);
 
-        if (foodMeshes[index] != null)
+        if (activeDroppedFood != null)
         {
-            foodMeshes[index].SetActive(false);
-        }
+            // ==================== FIX LOGIKA REPEAT DELIVERY ====================
+            // Beritahu DropZoneHandler di objek ini untuk membuka kembali sensornya
+            if (TryGetComponent<DropZoneHandler>(out var zone))
+            {
+                zone.ResetDropZone();
+            }
+            // ====================================================================
 
-        currentFoodIndex = Mathf.Max(0, currentFoodIndex - 1);
+            Destroy(activeDroppedFood);
+            activeDroppedFood = null;
+        }
 
         UpdateAlertIcon();
 
-        if (currentFoodIndex == 0 && targetAnimals != null)
+        if (targetAnimals != null)
         {
-            // [MODIFIKASI AMAN]: Kembalikan semua jenis hewan berkeliling
             foreach (GameObject animal in targetAnimals)
             {
                 if (animal == null) continue;
@@ -138,37 +156,41 @@ public class FeedingTrough : MonoBehaviour
                     horse.ResumeWandering();
                 }
             }
+        }
 
-            if (eatingAudioSource != null)
-            {
-                eatingAudioSource.Stop();
-            }
+        if (eatingAudioSource != null)
+        {
+            eatingAudioSource.Stop();
         }
     }
 
-    public bool IsFull()
+    public void ToggleHighlight(bool state)
     {
-        return currentFoodIndex >= foodMeshes.Length;
+        isHighlighted = state;
+        if (troughRenderer == null || highlightMaterial == null) return;
+        troughRenderer.material = isHighlighted ? highlightMaterial : originalMaterial;
     }
 
     private void UpdateAlertIcon()
     {
         if (emptyAlertIcon != null)
         {
-            emptyAlertIcon.SetActive(currentFoodIndex == 0 && !isHighlighted);
+            emptyAlertIcon.SetActive(currentHunger <= 0f && !isHighlighted);
         }
 
-        if (interactionText != null && !isHighlighted)
+        if (statusText != null)
         {
-            if (currentFoodIndex == 0)
+            statusText.text = "Lapar!";
+            statusText.gameObject.SetActive(currentHunger <= 0f);
+        }
+
+        if (hungerSlider != null && hungerSlider.fillRect != null)
+        {
+            Image fillImage = hungerSlider.fillRect.GetComponent<Image>();
+            if (fillImage != null)
             {
-                interactionText.text = "!";
-                interactionText.gameObject.SetActive(true);
-            }
-            else
-            {
-                interactionText.text = "";
-                interactionText.gameObject.SetActive(false);
+                float hungerPercentage = currentHunger / maxHunger;
+                fillImage.color = Color.Lerp(Color.red, Color.green, hungerPercentage);
             }
         }
     }

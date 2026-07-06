@@ -5,14 +5,15 @@ public class PlayerInteraction : MonoBehaviour
     [Header("Interaction Settings")]
     public float interactionDistance = 3f; 
     public LayerMask interactableLayer;    
-    
-    // UI Reference dihapus dari sini karena sudah dihandle oleh wadah masing-masing
 
     private Transform cameraTransform;
     private FeedingTrough lastTargetTrough; 
+    private BasicVRInteractionController vrController; // Referensi ke controller tangan/grab
 
     void Start()
     {
+        vrController = GetComponent<BasicVRInteractionController>();
+
         FirstPersonController fpsController = GetComponent<FirstPersonController>();
         if (fpsController != null && fpsController.cameraTransform != null)
         {
@@ -30,7 +31,8 @@ public class PlayerInteraction : MonoBehaviour
         
         if (Physics.Raycast(cameraTransform.position, cameraTransform.forward, out hit, interactionDistance, interactableLayer))
         {
-            FeedingTrough trough = hit.collider.GetComponent<FeedingTrough>();
+            // Ambil FeedingTrough baik di objek langsung atau di parent-nya
+            FeedingTrough trough = hit.collider.GetComponentInParent<FeedingTrough>();
 
             if (trough != null)
             {
@@ -40,18 +42,34 @@ public class PlayerInteraction : MonoBehaviour
                     lastTargetTrough = trough;
                 }
 
+                // Cek apakah player saat ini sedang memegang sesuatu lewat VR Controller
+                bool isHoldingSomething = (vrController != null && vrController.transform.Find("HoldPoint") != null && vrController.transform.Find("HoldPoint").childCount > 0);
+
                 if (!trough.IsFull())
                 {
-                    // Wadah ini yang akan menyalakan material GLOW dan TEXT miliknya sendiri
+                    // Nyalakan highlight material kuning pada wadah
                     trough.ToggleHighlight(true);
 
-                    if (Input.GetKeyDown(KeyCode.E))
+                    // ATUR NOTIFIKASI TEKS DINAMIS
+                    if (trough.interactionText != null)
                     {
-                        trough.FillOneFood();
+                        if (isHoldingSomething)
+                        {
+                            // Jika sedang bawa makanan, beri tahu tombol drop (sesuai KeyCode_dropKey di controller-mu yaitu Q)
+                            trough.interactionText.text = "Tekan [Q] untuk Menjatuhkan Makanan";
+                        }
+                        else
+                        {
+                            // Jika tangan kosong, ingatkan player untuk ambil jerami dulu
+                            trough.interactionText.text = "Bawa Hay Bale ke Sini!";
+                        }
+                        trough.interactionText.gameObject.SetActive(true);
                     }
                 }
                 else
                 {
+                    // Jika wadah penuh, matikan teks instruksi pengisian
+                    if (trough.interactionText != null) trough.interactionText.gameObject.SetActive(false);
                     trough.ToggleHighlight(false);
                 }
                 
@@ -66,8 +84,11 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (lastTargetTrough != null)
         {
-            // Mematikan visual & teks pada wadah yang ditinggalkan
             lastTargetTrough.ToggleHighlight(false);
+            if (lastTargetTrough.interactionText != null)
+            {
+                lastTargetTrough.interactionText.gameObject.SetActive(false);
+            }
             lastTargetTrough = null;
         }
     }
