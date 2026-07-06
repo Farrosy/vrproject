@@ -1060,6 +1060,14 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_SlopeLimit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_StepOffset
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
@@ -1072,8 +1080,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_AreaCenter
+      value: 
+      objectReference: {fileID: 271560096}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_TargetLayerMask.m_Bits
       value: 115
@@ -1125,9 +1137,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       insertIndex: -1
       addedObject: {fileID: 395054431}
-    - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 395054432}
   m_SourcePrefab: {fileID: 100100000, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
 --- !u!4 &79936271 stripped
 Transform:
@@ -3725,6 +3734,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7913029829438986354, guid: b8f850e5e20f8a74a9cac8c40782fe98, type: 3}
   m_PrefabInstance: {fileID: 1126049479}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &271560095
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 271560096}
+  m_Layer: 0
+  m_Name: center
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &271560096
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271560095}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 309716119}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &274666026
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4092,6 +4132,7 @@ Transform:
   - {fileID: 1726892147}
   - {fileID: 2038538227}
   - {fileID: 1892028220}
+  - {fileID: 271560096}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &316543956
@@ -5397,22 +5438,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &395054432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 395054424}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77395ebeb6a49b34fa50ea1ea45b57ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TigerPatrolNavMesh
-  agent: {fileID: 0}
-  anim: {fileID: 0}
-  wanderRadius: 5
-  centerPoint: {x: 0, y: 0, z: 0}
 --- !u!4 &397371377 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4135316606631342899, guid: 814709739de2db545a487449eb9389de, type: 3}
@@ -8715,6 +8740,14 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_SlopeLimit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_StepOffset
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
@@ -8727,8 +8760,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_AreaCenter
+      value: 
+      objectReference: {fileID: 271560096}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_TargetLayerMask.m_Bits
       value: 115
@@ -8780,9 +8817,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       insertIndex: -1
       addedObject: {fileID: 743495822}
-    - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 743495823}
   m_SourcePrefab: {fileID: 100100000, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
 --- !u!4 &702472092 stripped
 Transform:
@@ -9484,22 +9518,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &743495823
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 743495815}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77395ebeb6a49b34fa50ea1ea45b57ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TigerPatrolNavMesh
-  agent: {fileID: 0}
-  anim: {fileID: 0}
-  wanderRadius: 5
-  centerPoint: {x: 0, y: 0, z: 0}
 --- !u!1001 &746551351
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18427,6 +18445,14 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_SlopeLimit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_StepOffset
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
@@ -18439,8 +18465,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_AreaCenter
+      value: 
+      objectReference: {fileID: 271560096}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_TargetLayerMask.m_Bits
       value: 115
@@ -18492,9 +18522,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1371942903}
-    - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1371942904}
   m_SourcePrefab: {fileID: 100100000, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
 --- !u!4 &1371942896 stripped
 Transform:
@@ -18523,22 +18550,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &1371942904
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 556102201}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77395ebeb6a49b34fa50ea1ea45b57ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TigerPatrolNavMesh
-  agent: {fileID: 0}
-  anim: {fileID: 0}
-  wanderRadius: 5
-  centerPoint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1375433140
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22257,6 +22268,14 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_SlopeLimit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355906, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_StepOffset
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355916, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
@@ -22269,8 +22288,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_AreaCenter
+      value: 
+      objectReference: {fileID: 271560096}
     - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_TargetLayerMask.m_Bits
       value: 115
@@ -22322,9 +22345,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1670404394}
-    - targetCorrespondingSourceObject: {fileID: 5883155896844355918, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1670404395}
   m_SourcePrefab: {fileID: 100100000, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
 --- !u!4 &1670404387 stripped
 Transform:
@@ -22353,22 +22373,6 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &1670404395
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1108089465}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77395ebeb6a49b34fa50ea1ea45b57ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TigerPatrolNavMesh
-  agent: {fileID: 0}
-  anim: {fileID: 0}
-  wanderRadius: 5
-  centerPoint: {x: 0, y: 0, z: 0}
 --- !u!4 &1671225260 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2314420984316199405, guid: cc894c3a9e615b747a7f155e4db32bd6, type: 3}
@@ -23622,7 +23626,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!64 &1726892144
 MeshCollider:
   m_ObjectHideFlags: 0
