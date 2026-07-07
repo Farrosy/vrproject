@@ -17,6 +17,12 @@ public class WaterTrough : MonoBehaviour
     public MeshRenderer troughRenderer; 
     public Material highlightMaterial; 
     public TextMeshProUGUI interactionText; 
+
+    // ==================== TAMBAHAN BARU: AUDIO SETTINGS ====================
+    [Header("Audio Settings")]
+    [Tooltip("Masukkan Audio Source suara air mengalir / minum di sini")]
+    public AudioSource drinkingAudioSource; 
+    // =======================================================================
     
     private Material originalMaterial; 
     private bool isHighlighted = false;
@@ -57,7 +63,7 @@ public class WaterTrough : MonoBehaviour
     {
         if (bucketObject == null || isWaterActive) return;
 
-        // [PERBAIKAN UTAMA]: Mencari objek bernama "Water" di seluruh tingkatan anak/cucu (Anti-Null)
+        // Mencari objek bernama "Water" di seluruh tingkatan anak/cucu (Anti-Null)
         GameObject bucketWaterObject = null;
         Transform[] allChildren = bucketObject.GetComponentsInChildren<Transform>(true);
         
@@ -87,6 +93,13 @@ public class WaterTrough : MonoBehaviour
 
         isWaterActive = true;
 
+        // ==================== TAMBAHAN BARU: JALANKAN AUDIO ====================
+        if (drinkingAudioSource != null) 
+        {
+            drinkingAudioSource.Play();
+        }
+        // =======================================================================
+
         // 3. Panggil hewan untuk berkumpul minum
         if (_targetAnimals != null)
         {
@@ -98,9 +111,8 @@ public class WaterTrough : MonoBehaviour
                 if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.GoToFeeder(transform.position);
                 // Cek Kuda
                 else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.GoToFeeder(transform.position);
-                // ==================== FIX: PANGGIL HARIMAU SAAT AIR DITUANG ====================
+                // Panggil Harimau
                 else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.GoToFeeder(transform.position);
-                // ===============================================================================
             }
         }
 
@@ -120,6 +132,13 @@ public class WaterTrough : MonoBehaviour
 
         isWaterActive = false;
 
+        // ==================== TAMBAHAN BARU: MATIKAN AUDIO ====================
+        if (drinkingAudioSource != null) 
+        {
+            drinkingAudioSource.Stop();
+        }
+        // =======================================================================
+
         // Hewan selesai minum dan kembali berpencar secara acak
         if (_targetAnimals != null)
         {
@@ -131,9 +150,8 @@ public class WaterTrough : MonoBehaviour
                 if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.ResumeWandering();
                 // Bubarkan Kuda
                 else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.ResumeWandering();
-                // ==================== FIX: BUBARKAN HARIMAU SAAT AIR HABIS ====================
+                // Bubarkan Harimau
                 else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.ResumeWandering();
-                // ==============================================================================
             }
         }
         
