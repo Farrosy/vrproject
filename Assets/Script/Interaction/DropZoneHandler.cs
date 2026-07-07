@@ -27,12 +27,11 @@ public class DropZoneHandler : MonoBehaviour
 
     [Header("Events")]
     [SerializeField] private DropEvent _onCorrectDrop;
-    
-    // [FIX UTAMA]: Mengubah tipe data menjadi DropEvent agar boks event di Inspector berubah menjadi On Wrong Drop (GameObject)
     [SerializeField] private DropEvent _onWrongDrop;
 
     private bool isCompleted;
     private Droppable lastWrongDroppable;
+    private bool isHandlingWrongFoodInternally = false; // Flag internal pembaca pakan salah
 
     private void OnTriggerEnter(Collider other)
     {
@@ -43,6 +42,25 @@ public class DropZoneHandler : MonoBehaviour
     {
         TryAcceptDroppable(other);
     }
+
+    // ==================== FIX BARU: AUTO DETEKSI UN-DROP MAKANAN SALAH ====================
+    private void Update()
+    {
+        // Jika sedang menampung makanan yang salah, pantau statusnya setiap frame
+        if (isHandlingWrongFoodInternally && lastWrongDroppable != null)
+        {
+            if (lastWrongDroppable.TryGetComponent<Grabbable>(out var grabbable))
+            {
+                // Jika player mengambil kembali objek pakan yang salah tersebut
+                if (grabbable.IsGrabbed)
+                {
+                    Debug.Log("[DropZone] Makanan salah telah dicabut kembali oleh Player. Resetting zone.");
+                    ResetDropZone();
+                }
+            }
+        }
+    }
+    // =======================================================================================
 
     private void TryAcceptDroppable(Collider other)
     {
@@ -75,12 +93,11 @@ public class DropZoneHandler : MonoBehaviour
         HandleCorrectDrop(droppable);
     }
 
-    // ==================== FIX LOGIKA: JIKA MAKANAN SALAH TETAP DI-LOCK DI TEMPAT ====================
     private void HandleWrongDrop(Droppable droppable)
     {
-        isCompleted = true; // Kunci zona pakan sementara
+        isCompleted = true; // Kunci zone pakan sementara
+        isHandlingWrongFoodInternally = true; // Tandai pakan salah sedang menempel
 
-        // Jalankan fungsi snapping posisi dan pembekuan fisik agar pakan salah menempel di wadah
         SnapObjectIfNeeded(droppable.transform);
         FreezeObjectIfNeeded(droppable);
         droppable.MarkDropped();
@@ -88,14 +105,13 @@ public class DropZoneHandler : MonoBehaviour
         lastWrongDroppable = droppable;
         SetStatus("Wrong object dropped: " + droppable.DropId);
         
-        // Panggil event dengan melemparkan GameObject pakan yang salah ke script pakan
         _onWrongDrop?.Invoke(droppable.gameObject);
     }
-    // ==============================================================================================
 
     private void HandleCorrectDrop(Droppable droppable)
     {
         isCompleted = true;
+        isHandlingWrongFoodInternally = false;
 
         SnapObjectIfNeeded(droppable.transform);
         FreezeObjectIfNeeded(droppable);
@@ -162,6 +178,7 @@ public class DropZoneHandler : MonoBehaviour
     {
         isCompleted = false;
         lastWrongDroppable = null;
+        isHandlingWrongFoodInternally = false; // Reset status internal
         SetStatus("Ready for next food delivery.");
     }
 }
