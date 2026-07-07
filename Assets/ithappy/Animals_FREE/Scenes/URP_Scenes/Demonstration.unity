@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &24977788 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8073443194988779917, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
+  m_PrefabInstance: {fileID: 205924024}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &205924024
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -131,14 +136,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: Chicken_001
       objectReference: {fileID: 0}
+    - target: {fileID: 8881504610387854121, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
+      propertyPath: m_RotateSpeed
+      value: 245
+      objectReference: {fileID: 0}
     - target: {fileID: 8881504610387854123, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
       propertyPath: m_Center.y
       value: 0.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8881504610387854123, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
+      propertyPath: m_SlopeLimit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8881504610387854123, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
+      propertyPath: m_StepOffset
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8881504610387854134, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 963194229}
+    - target: {fileID: 8881504610387854134, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8881504610387854135, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -186,7 +207,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8073443194988779917, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1903012312}
   m_SourcePrefab: {fileID: 100100000, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
 --- !u!4 &333277781 stripped
 Transform:
@@ -468,6 +492,40 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &724802952 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6397291155531275063, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
+  m_PrefabInstance: {fileID: 750413284}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &724802953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724802952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df9a67c9d29f4673951f5813bd72ceae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ithappy.Animals_FREE.HorseAI
+  m_WanderRadius: 5
+  m_AreaRadius: 10
+  m_AreaCenter: {fileID: 0}
+  m_IdleDurationMin: 2
+  m_IdleDurationMax: 5
+  m_WalkSpeed: 1
+  m_RotateSpeed: 245
+  m_FoodDetectionRadius: 5
+  m_EatingDistance: 1
+  m_EatingDuration: 3
+  m_FoodLayerMask:
+    serializedVersion: 2
+    m_Bits: 115
+  m_FoodNameKeywords:
+  - Hay
+  - Feeder
+  - Food
 --- !u!1001 &750413284
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -524,6 +582,14 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 963194229}
+    - target: {fileID: 6397291155531275060, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6397291155531275061, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
+      propertyPath: m_RotateSpeed
+      value: 245
+      objectReference: {fileID: 0}
     - target: {fileID: 6397291155531275063, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
       propertyPath: m_Name
       value: Kitty_001
@@ -532,10 +598,21 @@ PrefabInstance:
       propertyPath: m_Center.y
       value: 0.4
       objectReference: {fileID: 0}
+    - target: {fileID: 6397291155531275067, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
+      propertyPath: m_SlopeLimit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6397291155531275067, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
+      propertyPath: m_StepOffset
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6397291155531275063, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 724802953}
   m_SourcePrefab: {fileID: 100100000, guid: 44a0de0f766c9634eb66f1d56b7edc9d, type: 3}
 --- !u!4 &804847606 stripped
 Transform:
@@ -955,6 +1032,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tiger_001
       objectReference: {fileID: 0}
+    - target: {fileID: 5883155896844355921, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
+      propertyPath: m_TargetLayerMask.m_Bits
+      value: 115
+      objectReference: {fileID: 0}
     - target: {fileID: 6552451252865160180, guid: 8741cd6c8b9fc3947999191d0c381f50, type: 3}
       propertyPath: m_RootOrder
       value: 6
@@ -1009,6 +1090,35 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8881504610387854135, guid: 6b0b0b098177a3b439c80991ec9deacc, type: 3}
   m_PrefabInstance: {fileID: 205924024}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1903012312
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 24977788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df9a67c9d29f4673951f5813bd72ceae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ithappy.Animals_FREE.HorseAI
+  m_WanderRadius: 5
+  m_AreaRadius: 10
+  m_AreaCenter: {fileID: 0}
+  m_IdleDurationMin: 2
+  m_IdleDurationMax: 5
+  m_WalkSpeed: 1
+  m_RotateSpeed: 245
+  m_FoodDetectionRadius: 5
+  m_EatingDistance: 1
+  m_EatingDuration: 3
+  m_FoodLayerMask:
+    serializedVersion: 2
+    m_Bits: 115
+  m_FoodNameKeywords:
+  - Hay
+  - Feeder
+  - Food
 --- !u!1001 &1932322940
 PrefabInstance:
   m_ObjectHideFlags: 0

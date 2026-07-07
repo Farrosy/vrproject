@@ -291,13 +291,14 @@ namespace ithappy.Animals_FREE
             }
         }
 
+        // ==================== FIX: ANIMATION SMOOTHING TRANSITION ====================
         private class AnimationHandler
         {
             private readonly Animator m_Animator;
             private readonly string m_VerticalID;
             private readonly string m_StateID;
 
-            private readonly float k_InputFlow = 4.5f;
+            private readonly float k_InputFlow = 5.0f; // Kecepatan transisi blend tree
 
             private float m_FlowState;
             private Vector2 m_FlowAxis;
@@ -311,11 +312,15 @@ namespace ithappy.Animals_FREE
 
             public void Animate(in Vector2 axis, float state, float deltaTime)
             {
-                m_Animator.SetFloat(m_VerticalID, m_FlowAxis.magnitude);
-                m_Animator.SetFloat(m_StateID, Mathf.Clamp01(m_FlowState));
+                // [FIX UTAMA]: Mengganti kalkulasi normalized rawan bug dengan Vector2.MoveTowards yang stabil
+                m_FlowAxis = Vector2.MoveTowards(m_FlowAxis, axis, k_InputFlow * deltaTime);
+                
+                // Selesaikan juga untuk transisi state ID
+                m_FlowState = Mathf.MoveTowards(m_FlowState, state, k_InputFlow * deltaTime);
 
-                m_FlowAxis = Vector2.ClampMagnitude(m_FlowAxis + k_InputFlow * deltaTime * (axis - m_FlowAxis).normalized, 1f);
-                m_FlowState = Mathf.Clamp01(m_FlowState + k_InputFlow * deltaTime * Mathf.Sign(state - m_FlowState));
+                // Kirim data yang sudah mulus tanpa jitter ke komponen Animator
+                m_Animator.SetFloat(m_VerticalID, m_FlowAxis.magnitude);
+                m_Animator.SetFloat(m_StateID, m_FlowState);
             }
 
             public void AnimateIK(in Vector3 target, in LookWeight lookWeight)
@@ -324,6 +329,7 @@ namespace ithappy.Animals_FREE
                 m_Animator.SetLookAtWeight(lookWeight.weight, lookWeight.body, lookWeight.head, lookWeight.eyes);
             }
         }
+        // =============================================================================
         #endregion
     }
 }

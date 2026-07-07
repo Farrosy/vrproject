@@ -1,5 +1,3 @@
-// Droppable.cs
-
 using UnityEngine;
 
 /// <summary>
@@ -11,19 +9,16 @@ public class Droppable : MonoBehaviour
     [SerializeField] private string _dropId = "Default";
     [SerializeField] private bool _disableAfterDropped;
 
-    /// <summary>
-    /// Identifier used by DropZoneHandler to validate this object.
-    /// </summary>
-    public string DropId => _dropId;
+    private Rigidbody _rb;
 
-    /// <summary>
-    /// Returns true if this object has already been accepted by a drop zone.
-    /// </summary>
+    public string DropId => _dropId;
     public bool IsDropped { get; private set; }
 
-    /// <summary>
-    /// Marks this object as successfully dropped.
-    /// </summary>
+    private void Awake()
+    {
+        _rb = GetComponent<Rigidbody>();
+    }
+
     public void MarkDropped()
     {
         IsDropped = true;
@@ -31,6 +26,29 @@ public class Droppable : MonoBehaviour
         if (_disableAfterDropped)
         {
             gameObject.SetActive(false);
+        }
+    }
+
+    public void ResetDroppedStatus()
+    {
+        IsDropped = false;
+        Debug.Log("[Droppable] Status IsDropped di-reset menjadi false untuk " + gameObject.name);
+    }
+
+    // ==================== AUTO-FIX BACKUP FOR GRAVITY ====================
+    // Fungsi ini berjalan otomatis di Unity jika player mengangkat objek ini kembali.
+    // Ini menjamin useGravity akan dipaksa menyala kembali secara independen dari script manapun.
+    private void OnTransformParentChanged()
+    {
+        // Jika objek diangkat oleh player (punya parent baru berupa tangan controller)
+        if (transform.parent != null)
+        {
+            ResetDroppedStatus();
+            if (_rb != null)
+            {
+                _rb.isKinematic = false;
+                _rb.useGravity = true; // Paksa mencentang ulang di inspector secara internal
+            }
         }
     }
 }

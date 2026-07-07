@@ -24,7 +24,7 @@ namespace ithappy.Animals_FREE
         [SerializeField, Min(0f)]
         private float m_IdleTimeMax = 5f;
 
-        [Header("Detection")]
+        [Header("Detection (Prey)")]
         [SerializeField, Min(0f)]
         private float m_DetectionRadius = 12f;
 
@@ -33,6 +33,12 @@ namespace ithappy.Animals_FREE
 
         [SerializeField]
         private string[] m_TargetNameKeywords = new[] { "Horse", "Cow" };
+
+        // ==================== TAMBAHAN: KEYWORD PAKAN EMULASI HORSE AI ====================
+        [Header("Food / Feeder Interaction")]
+        [SerializeField]
+        private string[] m_FoodNameKeywords = new[] { "Hay", "Feeder", "Food", "Water" };
+        // ===================================================================================
 
         [Header("Combat")]
         [SerializeField, Min(0f)]
@@ -53,6 +59,18 @@ namespace ithappy.Animals_FREE
 
         [SerializeField, Range(0f, 360f)]
         private float m_RotationSpeed = 180f;
+
+        [Header("Stuck Protection")]
+        [Tooltip("Batas waktu (detik) hewan diam sebelum dianggap mentok")]
+        [SerializeField] private float m_StuckTimeout = 2.0f;
+        private Vector3 m_LastPosition;
+        private float m_StuckTimer;
+
+        // ==================== FIX DATA: STATUS EMULASI HORSE AI ====================
+        private bool isEatingFromFeeder = false; 
+        private float m_FoodSearchCooldownTimer = 0f;
+        private const float FOOD_SEARCH_COOLDOWN_DURATION = 3.0f; 
+        // ============================================================================
 
         private CreatureMover m_Mover;
         private Collider[] m_OverlapBuffer = new Collider[32];
@@ -79,18 +97,32 @@ namespace ithappy.Animals_FREE
             m_Mover = GetComponent<CreatureMover>();
             m_Mover.SetSpeeds(m_WalkSpeed, m_RotationSpeed);
             SetIdle();
+
+            m_LastPosition = transform.position;
         }
 
         private void Update()
         {
             var deltaTime = Time.deltaTime;
 
-            if (m_State != State.Detect && m_State != State.Attack && m_State != State.Eat)
+            if (m_FoodSearchCooldownTimer > 0f)
             {
-                var nearestTarget = FindNearestTarget();
-                if (nearestTarget != null)
+                m_FoodSearchCooldownTimer -= deltaTime;
+            }
+
+            // Jalankan fungsi pengaman rintangan & kelancaran gerak kaki (Anti-Stutter)
+            HandleStuckCheck(deltaTime);
+
+            // Blokir deteksi berburu mangsa jika harimau sedang dipaksa makan di wadah player
+            if (!isEatingFromFeeder && m_FoodSearchCooldownTimer <= 0f)
+            {
+                if (m_State != State.Detect && m_State != State.Attack && m_State != State.Eat)
                 {
-                    SetDetect(nearestTarget);
+                    var nearestTarget = FindNearestTarget();
+                    if (nearestTarget != null)
+                    {
+                        SetDetect(nearestTarget);
+                    }
                 }
             }
 
@@ -152,13 +184,15 @@ namespace ithappy.Animals_FREE
                     m_StateTimer -= deltaTime;
                     if (m_StateTimer <= 0f)
                     {
-                        if (IsOutsideArea())
+                        // SINKRONISASI LOGIKA DIADAPTASI DARI HORSE AI
+                        if (!isEatingFromFeeder)
                         {
-                            SetReturn();
+                            if (IsOutsideArea()) SetReturn();
+                            else SetIdle();
                         }
                         else
                         {
-                            SetIdle();
+                            m_StateTimer = 1f; // Kunci posisi harimau di wadah sampai dibubarkan player
                         }
                     }
                     break;
@@ -172,6 +206,83 @@ namespace ithappy.Animals_FREE
 
             ApplyMovement();
         }
+
+        // ==================== FUNGSI BARU: ANTI-STUTTER DENGAN VALIDASI SUDUT ROTASI ====================
+        private void HandleStuckCheck(float deltaTime)
+        {
+            if (m_State == State.Wander || m_State == State.Chase || m_State == State.Return || m_State == State.Eat)
+            {
+                if (isEatingFromFeeder && m_State == State.Eat && Vector3.Distance(transform.position, m_TargetPosition) <= 0.6f)
+                {
+                    m_StuckTimer = 0f;
+                    return;
+                }
+
+                float distanceMoved = Vector3.Distance(transform.position, m_LastPosition);
+                Vector3 directionToTarget = (m_TargetPosition - transform.position).normalized;
+                
+                directionToTarget.y = 0f; 
+                Vector3 forwardLook = transform.forward;
+                forwardLook.y = 0f;
+
+                float angleToTarget = Vector3.Angle(forwardLook, directionToTarget);
+
+                if (angleToTarget < 30f && distanceMoved < 0.03f)
+                {
+                    m_StuckTimer += deltaTime;
+                    if (m_StuckTimer >= m_StuckTimeout)
+                    {
+                        Debug.LogWarning(gameObject.name + " mendeteksi rintangan buntu! Mengalihkan target.");
+                        
+                        if (isEatingFromFeeder)
+                        {
+                            ResumeWandering();
+                        }
+                        else
+                        {
+                            if (m_State == State.Chase) SetIdle();
+                            else PickWanderTarget();
+                        }
+                        m_StuckTimer = 0f;
+                    }
+                }
+                else
+                {
+                    m_StuckTimer = 0f; 
+                }
+            }
+            else
+            {
+                m_StuckTimer = 0f;
+            }
+
+            m_LastPosition = transform.position; 
+        }
+        // ==============================================================================================================
+
+        // ==================== FUNGSI JEMBATAN INTERAKSI (MAPPING DO-ACTION DARI HORSE AI) ====================
+        public void GoToFeeder(Vector3 feederPosition)
+        {
+            isEatingFromFeeder = true;
+            m_TargetPosition = feederPosition;
+            m_HasTarget = true;
+            m_State = State.Eat;
+            m_StateTimer = m_EatingTime;
+            
+            Debug.Log(gameObject.name + " (TigerAI) sukses diarahkan menuju wadah pakan!");
+        }
+
+        public void ResumeWandering()
+        {
+            isEatingFromFeeder = false;
+            m_TargetTransform = null;
+            m_FoodSearchCooldownTimer = FOOD_SEARCH_COOLDOWN_DURATION;
+            
+            SetIdle();
+            
+            Debug.Log(gameObject.name + " dibubarkan dari area pakan!");
+        }
+        // ======================================================================================================
 
         private void OnValidate()
         {

@@ -7,7 +7,6 @@ using ithappy.Animals_FREE;
 public class FeedingTrough : MonoBehaviour
 {
     [Header("Animals Settings")]
-    [Tooltip("Masukkan Game Object Sapi (AnimalWander) or Kuda (HorseAI) ke sini")]
     public GameObject[] targetAnimals; 
     
     [Header("Highlight & UI Settings")]
@@ -20,6 +19,8 @@ public class FeedingTrough : MonoBehaviour
 
     [Header("Audio Settings")]
     public AudioSource eatingAudioSource; 
+    [Tooltip("Masukkan Audio Source raungan harimau marah/kecewa di sini")]
+    public AudioSource wrongFoodAudioSource; 
 
     [Header("Hunger System Settings")]
     public Slider hungerSlider;
@@ -34,18 +35,16 @@ public class FeedingTrough : MonoBehaviour
     private bool isHighlighted = false;
     
     private GameObject activeDroppedFood = null;
+    private bool isHoldingWrongFood = false; // Flag status pakan salah
+
+    private Collider m_TroughCollider;
 
     void Start()
     {
-        if (troughRenderer != null)
-        {
-            originalMaterial = troughRenderer.material;
-        }
+        m_TroughCollider = GetComponent<Collider>();
 
-        if (interactionText != null)
-        {
-            interactionText.gameObject.SetActive(false);
-        }
+        if (troughRenderer != null) originalMaterial = troughRenderer.material;
+        if (interactionText != null) interactionText.gameObject.SetActive(false);
 
         currentHunger = 0f; 
         if (hungerSlider != null)
@@ -53,13 +52,12 @@ public class FeedingTrough : MonoBehaviour
             hungerSlider.maxValue = maxHunger;
             hungerSlider.value = currentHunger;
         }
-
         UpdateAlertIcon();
     }
 
     void Update()
     {
-        if (activeDroppedFood != null)
+        if (activeDroppedFood != null && !isHoldingWrongFood)
         {
             currentHunger = maxHunger;
             if (hungerSlider != null) hungerSlider.value = currentHunger;
@@ -79,6 +77,56 @@ public class FeedingTrough : MonoBehaviour
                 UpdateAlertIcon();
             }
         }
+
+        // ==================== FIX SOLUSI AMAN SINKRONISASI GRAB ====================
+        if (isHoldingWrongFood && activeDroppedFood != null)
+        {
+            if (activeDroppedFood.TryGetComponent<Grabbable>(out var grabbable) && grabbable.IsGrabbed)
+            {
+                // 1. Bersihkan status Droppable secara instan agar boks detektor langsung mengenali pakan ini baru lagi kelak
+                if (activeDroppedFood.TryGetComponent<Droppable>(out var droppable))
+                {
+                    droppable.ResetDroppedStatus();
+                }
+
+                // 2. Kembalikan fungsional Collider pakan menjadi solid non-trigger secara instan
+                if (activeDroppedFood.TryGetComponent<Collider>(out var col))
+                {
+                    col.isTrigger = false;
+                }
+
+                // 3. PANGGIL BACKUP FORCE: Paksa setelan dasar internal Grabbable kembali ke setelan default normal (Bebas Melayang)
+                if (activeDroppedFood.TryGetComponent<Grabbable>(out var wrongGrabbable))
+                {
+                    // Fungsi pembantu ini kita panggil jika ada di Grabbable, jika tidak kita force lurus via Rigidbody saat dilepas nanti
+                    // Kita tidak memaksa rb.useGravity = true di sini karena sedang dipegang tangan player!
+                }
+
+                // 4. Bebaskan status wadah pakan
+                activeDroppedFood = null;
+                isHoldingWrongFood = false;
+
+                if (m_TroughCollider != null) m_TroughCollider.enabled = true;
+
+                if (TryGetComponent<DropZoneHandler>(out var zone))
+                {
+                    zone.ResetDropZone(); 
+                }
+                UpdateAlertIcon();
+                Debug.Log("[Trough] Pakan salah berhasil diambil. Status zona dibersihkan.");
+            }
+        }
+        else if (isHoldingWrongFood && activeDroppedFood == null)
+        {
+            isHoldingWrongFood = false;
+            if (m_TroughCollider != null) m_TroughCollider.enabled = true;
+
+            if (TryGetComponent<DropZoneHandler>(out var zone))
+            {
+                zone.ResetDropZone();
+            }
+            UpdateAlertIcon();
+        }
     }
 
     public bool IsFull()
@@ -86,82 +134,107 @@ public class FeedingTrough : MonoBehaviour
         return activeDroppedFood != null;
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
+        {
+            if (isHoldingWrongFood) return;
+            CallAllAnimals();
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
+        {
+            if (!IsFull() || isHoldingWrongFood)
+            {
+                DismissAllAnimals();
+            }
+        }
+    }
+
+    private void CallAllAnimals()
+    {
+        if (targetAnimals == null) return;
+        foreach (GameObject animal in targetAnimals)
+        {
+            if (animal == null) continue;
+            if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.GoToFeeder(transform.position);
+            else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.GoToFeeder(transform.position);
+            else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.GoToFeeder(transform.position);
+        }
+    }
+
+    private void DismissAllAnimals()
+    {
+        if (targetAnimals == null) return;
+        foreach (GameObject animal in targetAnimals)
+        {
+            if (animal == null) continue;
+            if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.ResumeWandering();
+            else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.ResumeWandering();
+            else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.ResumeWandering();
+        }
+    }
+
     public void FillOneFood(GameObject foodObject)
     {
         if (currentHunger > 0f || activeDroppedFood != null) return;
 
         activeDroppedFood = foodObject;
+        isHoldingWrongFood = false;
+
+        if (m_TroughCollider != null) m_TroughCollider.enabled = false;
 
         currentHunger = maxHunger;
         if (hungerSlider != null) hungerSlider.value = currentHunger;
 
-        if (targetAnimals != null)
-        {
-            foreach (GameObject animal in targetAnimals)
-            {
-                if (animal == null) continue;
+        CallAllAnimals();
 
-                if (animal.TryGetComponent<AnimalWander>(out var cow))
-                {
-                    cow.GoToFeeder(transform.position);
-                }
-                else if (animal.TryGetComponent<HorseAI>(out var horse))
-                {
-                    horse.GoToFeeder(transform.position);
-                }
-            }
-        }
-
-        if (eatingAudioSource != null)
-        {
-            eatingAudioSource.Play();
-        }
+        if (eatingAudioSource != null) eatingAudioSource.Play();
 
         StartCoroutine(ResetFoodAfterDelay(5f));
         UpdateAlertIcon();
+    }
+
+    public void FillWrongFood(GameObject wrongFoodObject)
+    {
+        if (activeDroppedFood == wrongFoodObject) return;
+
+        activeDroppedFood = wrongFoodObject;
+        isHoldingWrongFood = true; 
+
+        // JANGAN nonaktifkan collider wadah di sini agar update deteksi di atas tetap jalan responsif!
+        DismissAllAnimals(); 
+
+        if (wrongFoodAudioSource != null)
+        {
+            wrongFoodAudioSource.Play();
+        }
     }
 
     private IEnumerator ResetFoodAfterDelay(float delayDuration)
     {
         yield return new WaitForSeconds(delayDuration);
 
-        if (activeDroppedFood != null)
+        if (activeDroppedFood != null && !isHoldingWrongFood)
         {
-            // ==================== FIX LOGIKA REPEAT DELIVERY ====================
-            // Beritahu DropZoneHandler di objek ini untuk membuka kembali sensornya
+            if (m_TroughCollider != null) m_TroughCollider.enabled = true;
+
             if (TryGetComponent<DropZoneHandler>(out var zone))
             {
                 zone.ResetDropZone();
             }
-            // ====================================================================
 
             Destroy(activeDroppedFood);
             activeDroppedFood = null;
         }
 
         UpdateAlertIcon();
+        DismissAllAnimals();
 
-        if (targetAnimals != null)
-        {
-            foreach (GameObject animal in targetAnimals)
-            {
-                if (animal == null) continue;
-
-                if (animal.TryGetComponent<AnimalWander>(out var cow))
-                {
-                    cow.ResumeWandering();
-                }
-                else if (animal.TryGetComponent<HorseAI>(out var horse))
-                {
-                    horse.ResumeWandering();
-                }
-            }
-        }
-
-        if (eatingAudioSource != null)
-        {
-            eatingAudioSource.Stop();
-        }
+        if (eatingAudioSource != null) eatingAudioSource.Stop();
     }
 
     public void ToggleHighlight(bool state)
@@ -180,8 +253,8 @@ public class FeedingTrough : MonoBehaviour
 
         if (statusText != null)
         {
-            statusText.text = "Lapar!";
-            statusText.gameObject.SetActive(currentHunger <= 0f);
+            statusText.text = isHoldingWrongFood ? "Salah Makanan!" : "Lapar!";
+            statusText.gameObject.SetActive(currentHunger <= 0f || isHoldingWrongFood);
         }
 
         if (hungerSlider != null && hungerSlider.fillRect != null)
