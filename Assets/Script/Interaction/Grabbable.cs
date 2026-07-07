@@ -1,5 +1,3 @@
-// Grabbable.cs
-
 using UnityEngine;
 
 /// <summary>
@@ -18,6 +16,11 @@ public class Grabbable : MonoBehaviour
     private bool originalUseGravity;
     private RigidbodyConstraints originalConstraints;
 
+    // --- TAMBAHAN BARU ---
+    private Collider _collider;
+    private bool originalIsTrigger;
+    // ---------------------
+
     /// <summary>
     /// Returns true if this object is currently grabbed.
     /// </summary>
@@ -29,16 +32,20 @@ public class Grabbable : MonoBehaviour
         {
             _rigidbody = GetComponent<Rigidbody>();
         }
+
+        // --- TAMBAHAN BARU: Mengambil komponen Collider saat game mulai ---
+        _collider = GetComponent<Collider>();
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        if (!IsGrabbed || holdPoint == null || _rigidbody == null)
+        if (!IsGrabbed || holdPoint == null)
         {
             return;
         }
 
-        _rigidbody.MovePosition(holdPoint.position);
+        transform.position = holdPoint.position;
+        transform.rotation = holdPoint.rotation;
     }
 
     /// <summary>
@@ -56,6 +63,14 @@ public class Grabbable : MonoBehaviour
 
         originalUseGravity = _rigidbody.useGravity;
         originalConstraints = _rigidbody.constraints;
+
+        // --- TAMBAHAN BARU: Mematikan kepadatan fisik saat dipegang ---
+        if (_collider != null)
+        {
+            originalIsTrigger = _collider.isTrigger; // Simpan status aslinya
+            _collider.isTrigger = true;              // Jadikan tembus pandang (Trigger)
+        }
+        // --------------------------------------------------------------
 
         if (_disableGravityOnGrab)
         {
@@ -86,6 +101,14 @@ public class Grabbable : MonoBehaviour
 
         _rigidbody.useGravity = originalUseGravity;
         _rigidbody.constraints = originalConstraints;
+
+        // --- TAMBAHAN BARU: Mengembalikan kepadatan fisik saat dilempar ---
+        if (_collider != null)
+        {
+            _collider.isTrigger = originalIsTrigger; // Kembalikan ke wujud semula
+        }
+        // ------------------------------------------------------------------
+
         _rigidbody.linearVelocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;
     }
