@@ -6,8 +6,13 @@ using ithappy.Animals_FREE;
 
 public class FeedingTrough : MonoBehaviour
 {
+    public enum TroughType { Herbivore, Carnivore }
+
+    [Header("Trough Target Type")]
+    [Tooltip("Pilih tipe tempat makan ini (Herbivore untuk Sapi/Kuda, Carnivore untuk Harimau)")]
+    public TroughType troughType = TroughType.Herbivore;
+
     [Header("Animals Settings")]
-    [Tooltip("Masukkan Game Object Sapi (AnimalWander), Kuda (HorseAI), atau Harimau (TigerAI) ke sini")]
     public GameObject[] targetAnimals; 
     
     [Header("Highlight & UI Settings")]
@@ -20,6 +25,8 @@ public class FeedingTrough : MonoBehaviour
 
     [Header("Audio Settings")]
     public AudioSource eatingAudioSource; 
+    [Tooltip("Masukkan Audio Source untuk efek suara jika hewan diberi makanan yang salah")]
+    public AudioSource wrongFoodAudioSource; 
 
     [Header("Hunger System Settings")]
     public Slider hungerSlider;
@@ -32,20 +39,12 @@ public class FeedingTrough : MonoBehaviour
 
     private Material originalMaterial; 
     private bool isHighlighted = false;
-    
     private GameObject activeDroppedFood = null;
 
     void Start()
     {
-        if (troughRenderer != null)
-        {
-            originalMaterial = troughRenderer.material;
-        }
-
-        if (interactionText != null)
-        {
-            interactionText.gameObject.SetActive(false);
-        }
+        if (troughRenderer != null) originalMaterial = troughRenderer.material;
+        if (interactionText != null) interactionText.gameObject.SetActive(false);
 
         currentHunger = 0f; 
         if (hungerSlider != null)
@@ -53,14 +52,14 @@ public class FeedingTrough : MonoBehaviour
             hungerSlider.maxValue = maxHunger;
             hungerSlider.value = currentHunger;
         }
-
         UpdateAlertIcon();
     }
 
     void Update()
     {
-        if (activeDroppedFood != null)
+        if (activeDroppedFood != null && currentHunger > 0f)
         {
+            // Jika makanan yang valid sedang aktif, tahan bar hunger agar tetap penuh
             currentHunger = maxHunger;
             if (hungerSlider != null) hungerSlider.value = currentHunger;
             hungerDecreaseTimer = 0f; 
@@ -86,23 +85,18 @@ public class FeedingTrough : MonoBehaviour
         return activeDroppedFood != null;
     }
 
-    // ==================== FIX BARU: DETEKSI PLAYER MENDEKAT ====================
     private void OnTriggerEnter(Collider other)
     {
-        // Cek apakah yang mendekat adalah Player
         if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
         {
-            Debug.Log("Player mendekati wadah pakan! Memanggil semua hewan untuk berkumpul.");
             CallAllAnimals();
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        // Cek jika Player menjauh dan wadah dalam kondisi KOSONG, bubarkan hewan kembali keliling
         if ((other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null) && !IsFull())
         {
-            Debug.Log("Player menjauh dan wadah kosong! Membubarkan hewan.");
             DismissAllAnimals();
         }
     }
@@ -110,66 +104,58 @@ public class FeedingTrough : MonoBehaviour
     private void CallAllAnimals()
     {
         if (targetAnimals == null) return;
-
         foreach (GameObject animal in targetAnimals)
         {
             if (animal == null) continue;
-
-            if (animal.TryGetComponent<AnimalWander>(out var cow))
-            {
-                cow.GoToFeeder(transform.position);
-            }
-            else if (animal.TryGetComponent<HorseAI>(out var horse))
-            {
-                horse.GoToFeeder(transform.position);
-            }
-            else if (animal.TryGetComponent<TigerAI>(out var tiger))
-            {
-                tiger.GoToFeeder(transform.position);
-            }
+            if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.GoToFeeder(transform.position);
+            else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.GoToFeeder(transform.position);
+            else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.GoToFeeder(transform.position);
         }
     }
 
     private void DismissAllAnimals()
     {
         if (targetAnimals == null) return;
-
         foreach (GameObject animal in targetAnimals)
         {
             if (animal == null) continue;
-
-            if (animal.TryGetComponent<AnimalWander>(out var cow))
-            {
-                cow.ResumeWandering();
-            }
-            else if (animal.TryGetComponent<HorseAI>(out var horse))
-            {
-                horse.ResumeWandering();
-            }
-            else if (animal.TryGetComponent<TigerAI>(out var tiger))
-            {
-                tiger.ResumeWandering();
-            }
+            if (animal.TryGetComponent<AnimalWander>(out var cow)) cow.ResumeWandering();
+            else if (animal.TryGetComponent<HorseAI>(out var horse)) horse.ResumeWandering();
+            else if (animal.TryGetComponent<TigerAI>(out var tiger)) tiger.ResumeWandering();
         }
     }
-    // ===========================================================================
 
     public void FillOneFood(GameObject foodObject)
     {
-        if (currentHunger > 0f || activeDroppedFood != null) return;
+        if (foodObject == null || activeDroppedFood != null) return;
 
+        // Cek ID makanan dari komponen Droppable
+        string foodId = "";
+        if (foodObject.TryGetComponent<Droppable>(out var droppable))
+        {
+            foodId = droppable.DropId;
+        }
+
+        // ==================== LOGIKA VALIDASI MAKANAN SALAH ====================
+        if (troughType == TroughType.Carnivore && foodId != "Meat")
+        {
+            Debug.LogWarning("Harimau menolak makanan ini! Memutar suara salah makan.");
+            if (wrongFoodAudioSource != null) wrongFoodAudioSource.Play();
+            
+            // 1. Makanan tetap berada di situ (tidak di-destroy)
+            // 2. Bar hungry tidak bertambah, hewan tidak dipanggil makan
+            return; 
+        }
+        // =======================================================================
+
+        // Jika makanan benar (atau untuk tempat makan Herbivore biasa)
         activeDroppedFood = foodObject;
-
         currentHunger = maxHunger;
         if (hungerSlider != null) hungerSlider.value = currentHunger;
 
-        // Panggil fungsi kumpul semua hewan
         CallAllAnimals();
 
-        if (eatingAudioSource != null)
-        {
-            eatingAudioSource.Play();
-        }
+        if (eatingAudioSource != null) eatingAudioSource.Play();
 
         StartCoroutine(ResetFoodAfterDelay(5f));
         UpdateAlertIcon();
@@ -191,14 +177,9 @@ public class FeedingTrough : MonoBehaviour
         }
 
         UpdateAlertIcon();
-
-        // Bubarkan semua hewan jika makanan habis
         DismissAllAnimals();
 
-        if (eatingAudioSource != null)
-        {
-            eatingAudioSource.Stop();
-        }
+        if (eatingAudioSource != null) eatingAudioSource.Stop();
     }
 
     public void ToggleHighlight(bool state)
@@ -210,11 +191,7 @@ public class FeedingTrough : MonoBehaviour
 
     private void UpdateAlertIcon()
     {
-        if (emptyAlertIcon != null)
-        {
-            emptyAlertIcon.SetActive(currentHunger <= 0f && !isHighlighted);
-        }
-
+        if (emptyAlertIcon != null) emptyAlertIcon.SetActive(currentHunger <= 0f && !isHighlighted);
         if (statusText != null)
         {
             statusText.text = "Lapar!";
