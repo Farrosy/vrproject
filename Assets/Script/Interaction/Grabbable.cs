@@ -42,17 +42,6 @@ public class Grabbable : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        if (!IsGrabbed || holdPoint == null)
-        {
-            return;
-        }
-
-        transform.position = holdPoint.position;
-        transform.rotation = holdPoint.rotation;
-    }
-
     /// <summary>
     /// Grabs this object and moves it toward the assigned hold point.
     /// </summary>
@@ -66,7 +55,13 @@ public class Grabbable : MonoBehaviour
         holdPoint = targetHoldPoint;
         IsGrabbed = true;
 
-        // ==================== FIX DATA PROTECTION ====================
+        // --- FIX DARI KITA: Anti-Getar pakai Parenting ---
+        transform.SetParent(holdPoint);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+        // -------------------------------------------------
+
+        // ==================== FIX DATA PROTECTION (DARI TEMANMU) ====================
         // Jika objek di-grab saat kondisinya sedang membeku di wadah pakan salah,
         // JANGAN simpan setelan beku tersebut sebagai 'original state'. Paksa ke setelan fisis normal.
         if (_rigidbody.isKinematic && _rigidbody.useGravity == false)
@@ -80,7 +75,7 @@ public class Grabbable : MonoBehaviour
             originalIsKinematic = _rigidbody.isKinematic;
         }
         originalConstraints = _rigidbody.constraints;
-        // =============================================================
+        // ============================================================================
 
         // Paksa objek menjadi Kinematic saat digenggam agar gerakannya mulus mengikuti kamera player
         _rigidbody.isKinematic = true; 
@@ -122,7 +117,11 @@ public class Grabbable : MonoBehaviour
         IsGrabbed = false;
         holdPoint = null;
 
-        // ==================== FIX UTAMA: KEMBALIKAN FISIKA SOLID ====================
+        // --- FIX DARI KITA: Lepas dari tangan saat di-drop ---
+        transform.SetParent(null);
+        // -----------------------------------------------------
+
+        // ==================== FIX UTAMA (DARI TEMANMU) ====================
         // Saat dilepas dari tangan player, paksa objek kembali memiliki berat dan jatuh bebas
         _rigidbody.isKinematic = originalIsKinematic; 
         _rigidbody.useGravity = originalUseGravity;
