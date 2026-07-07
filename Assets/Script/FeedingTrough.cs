@@ -6,12 +6,6 @@ using ithappy.Animals_FREE;
 
 public class FeedingTrough : MonoBehaviour
 {
-    public enum TroughType { Herbivore, Carnivore }
-
-    [Header("Trough Target Type")]
-    [Tooltip("Pilih tipe tempat makan ini (Herbivore untuk Sapi/Kuda, Carnivore untuk Harimau)")]
-    public TroughType troughType = TroughType.Herbivore;
-
     [Header("Animals Settings")]
     public GameObject[] targetAnimals; 
     
@@ -25,7 +19,7 @@ public class FeedingTrough : MonoBehaviour
 
     [Header("Audio Settings")]
     public AudioSource eatingAudioSource; 
-    [Tooltip("Masukkan Audio Source untuk efek suara jika hewan diberi makanan yang salah")]
+    [Tooltip("Masukkan Audio Source raungan harimau marah/kecewa di sini")]
     public AudioSource wrongFoodAudioSource; 
 
     [Header("Hunger System Settings")]
@@ -39,7 +33,9 @@ public class FeedingTrough : MonoBehaviour
 
     private Material originalMaterial; 
     private bool isHighlighted = false;
+    
     private GameObject activeDroppedFood = null;
+    private bool isHoldingWrongFood = false; // Flag status pakan salah
 
     void Start()
     {
@@ -57,9 +53,8 @@ public class FeedingTrough : MonoBehaviour
 
     void Update()
     {
-        if (activeDroppedFood != null && currentHunger > 0f)
+        if (activeDroppedFood != null && !isHoldingWrongFood)
         {
-            // Jika makanan yang valid sedang aktif, tahan bar hunger agar tetap penuh
             currentHunger = maxHunger;
             if (hungerSlider != null) hungerSlider.value = currentHunger;
             hungerDecreaseTimer = 0f; 
@@ -78,7 +73,63 @@ public class FeedingTrough : MonoBehaviour
                 UpdateAlertIcon();
             }
         }
+
+        // ==================== FIX BUG: PULIHKAN GRAVITASI & FISIKA OBJEK ====================
+        // Jika status pakan salah aktif, cek apakah objek tersebut dilepas paksa / di-pickup oleh Player
+        if (isHoldingWrongFood && activeDroppedFood != null)
+        {
+            // Deteksi lewat komponen Grabbable bawaan sistem kamu
+            if (activeDroppedFood.TryGetComponent<Grabbable>(out var grabbable) && grabbable.IsGrabbed)
+            {
+                UnfreezeAndReleaseObject(activeDroppedFood);
+                
+                activeDroppedFood = null;
+                isHoldingWrongFood = false;
+
+                if (TryGetComponent<DropZoneHandler>(out var zone))
+                {
+                    zone.ResetDropZone(); // Buka kembali sensor DropZone
+                }
+                UpdateAlertIcon();
+            }
+        }
+        // Kondisi cadangan jika objek hancur mendadak dari sistem luar luar
+        else if (isHoldingWrongFood && activeDroppedFood == null)
+        {
+            isHoldingWrongFood = false;
+            if (TryGetComponent<DropZoneHandler>(out var zone))
+            {
+                zone.ResetDropZone();
+            }
+            UpdateAlertIcon();
+        }
+        // ===================================================================================
     }
+
+    // ==================== FUNGSI BARU: MENGEMBALIKAN CONFIG RIGIDBODY & DROPPABLE ====================
+    private void UnfreezeAndReleaseObject(GameObject targetFood)
+    {
+        if (targetFood == null) return;
+
+        // 1. Pulihkan status fungsional Droppable agar bisa diterima di boks pakan lain lagi
+        if (targetFood.TryGetComponent<Droppable>(out var droppable))
+        {
+            // Mengingat script Droppable bawaan menggunakan MarkDropped(), kita harus mereset flag internalnya jika ada fungsi Reset/Unmark.
+            // Namun, jika tidak ada fungsi reset bawaan, minimal komponen fisikanya kita normalkan di bawah:
+            Debug.Log(targetFood.name + " berhasil dicabut! Mengembalikan setelan fisika.");
+        }
+
+        // 2. Mengaktifkan kembali sistem physics gravitasi objek
+        if (targetFood.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.isKinematic = false;
+            rb.useGravity = true;
+            
+            // Berikan sedikit dorongan mikro ke atas agar objek tidak amblas menembus collider wadah pakan saat di-unfreeze
+            rb.AddForce(Vector3.up * 2f, ForceMode.Impulse); 
+        }
+    }
+    // =================================================================================================
 
     public bool IsFull()
     {
@@ -89,15 +140,22 @@ public class FeedingTrough : MonoBehaviour
     {
         if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
         {
+            if (isHoldingWrongFood) return;
+
+            Debug.Log("Player mendekati wadah pakan! Memanggil semua hewan untuk berkumpul.");
             CallAllAnimals();
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if ((other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null) && !IsFull())
+        if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
         {
-            DismissAllAnimals();
+            if (!IsFull() || isHoldingWrongFood)
+            {
+                Debug.Log("Player menjauh! Membubarkan hewan.");
+                DismissAllAnimals();
+            }
         }
     }
 
@@ -127,29 +185,11 @@ public class FeedingTrough : MonoBehaviour
 
     public void FillOneFood(GameObject foodObject)
     {
-        if (foodObject == null || activeDroppedFood != null) return;
+        if (currentHunger > 0f || activeDroppedFood != null) return;
 
-        // Cek ID makanan dari komponen Droppable
-        string foodId = "";
-        if (foodObject.TryGetComponent<Droppable>(out var droppable))
-        {
-            foodId = droppable.DropId;
-        }
-
-        // ==================== LOGIKA VALIDASI MAKANAN SALAH ====================
-        if (troughType == TroughType.Carnivore && foodId != "Meat")
-        {
-            Debug.LogWarning("Harimau menolak makanan ini! Memutar suara salah makan.");
-            if (wrongFoodAudioSource != null) wrongFoodAudioSource.Play();
-            
-            // 1. Makanan tetap berada di situ (tidak di-destroy)
-            // 2. Bar hungry tidak bertambah, hewan tidak dipanggil makan
-            return; 
-        }
-        // =======================================================================
-
-        // Jika makanan benar (atau untuk tempat makan Herbivore biasa)
         activeDroppedFood = foodObject;
+        isHoldingWrongFood = false;
+
         currentHunger = maxHunger;
         if (hungerSlider != null) hungerSlider.value = currentHunger;
 
@@ -161,11 +201,26 @@ public class FeedingTrough : MonoBehaviour
         UpdateAlertIcon();
     }
 
+    public void FillWrongFood(GameObject wrongFoodObject)
+    {
+        activeDroppedFood = wrongFoodObject;
+        isHoldingWrongFood = true; 
+
+        DismissAllAnimals(); 
+
+        if (wrongFoodAudioSource != null)
+        {
+            wrongFoodAudioSource.Play();
+        }
+
+        Debug.LogWarning("Makanan salah menempel! Segera ambil kembali jerami untuk menggantinya.");
+    }
+
     private IEnumerator ResetFoodAfterDelay(float delayDuration)
     {
         yield return new WaitForSeconds(delayDuration);
 
-        if (activeDroppedFood != null)
+        if (activeDroppedFood != null && !isHoldingWrongFood)
         {
             if (TryGetComponent<DropZoneHandler>(out var zone))
             {
@@ -191,11 +246,15 @@ public class FeedingTrough : MonoBehaviour
 
     private void UpdateAlertIcon()
     {
-        if (emptyAlertIcon != null) emptyAlertIcon.SetActive(currentHunger <= 0f && !isHighlighted);
+        if (emptyAlertIcon != null)
+        {
+            emptyAlertIcon.SetActive(currentHunger <= 0f && !isHighlighted);
+        }
+
         if (statusText != null)
         {
-            statusText.text = "Lapar!";
-            statusText.gameObject.SetActive(currentHunger <= 0f);
+            statusText.text = isHoldingWrongFood ? "Salah Makanan!" : "Lapar!";
+            statusText.gameObject.SetActive(currentHunger <= 0f || isHoldingWrongFood);
         }
 
         if (hungerSlider != null && hungerSlider.fillRect != null)
