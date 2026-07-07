@@ -86,6 +86,74 @@ public class FeedingTrough : MonoBehaviour
         return activeDroppedFood != null;
     }
 
+    // ==================== FIX BARU: DETEKSI PLAYER MENDEKAT ====================
+    private void OnTriggerEnter(Collider other)
+    {
+        // Cek apakah yang mendekat adalah Player
+        if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
+        {
+            Debug.Log("Player mendekati wadah pakan! Memanggil semua hewan untuk berkumpul.");
+            CallAllAnimals();
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        // Cek jika Player menjauh dan wadah dalam kondisi KOSONG, bubarkan hewan kembali keliling
+        if ((other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null) && !IsFull())
+        {
+            Debug.Log("Player menjauh dan wadah kosong! Membubarkan hewan.");
+            DismissAllAnimals();
+        }
+    }
+
+    private void CallAllAnimals()
+    {
+        if (targetAnimals == null) return;
+
+        foreach (GameObject animal in targetAnimals)
+        {
+            if (animal == null) continue;
+
+            if (animal.TryGetComponent<AnimalWander>(out var cow))
+            {
+                cow.GoToFeeder(transform.position);
+            }
+            else if (animal.TryGetComponent<HorseAI>(out var horse))
+            {
+                horse.GoToFeeder(transform.position);
+            }
+            else if (animal.TryGetComponent<TigerAI>(out var tiger))
+            {
+                tiger.GoToFeeder(transform.position);
+            }
+        }
+    }
+
+    private void DismissAllAnimals()
+    {
+        if (targetAnimals == null) return;
+
+        foreach (GameObject animal in targetAnimals)
+        {
+            if (animal == null) continue;
+
+            if (animal.TryGetComponent<AnimalWander>(out var cow))
+            {
+                cow.ResumeWandering();
+            }
+            else if (animal.TryGetComponent<HorseAI>(out var horse))
+            {
+                horse.ResumeWandering();
+            }
+            else if (animal.TryGetComponent<TigerAI>(out var tiger))
+            {
+                tiger.ResumeWandering();
+            }
+        }
+    }
+    // ===========================================================================
+
     public void FillOneFood(GameObject foodObject)
     {
         if (currentHunger > 0f || activeDroppedFood != null) return;
@@ -95,30 +163,8 @@ public class FeedingTrough : MonoBehaviour
         currentHunger = maxHunger;
         if (hungerSlider != null) hungerSlider.value = currentHunger;
 
-        if (targetAnimals != null)
-        {
-            foreach (GameObject animal in targetAnimals)
-            {
-                if (animal == null) continue;
-
-                // 1. Cek Komponen Sapi
-                if (animal.TryGetComponent<AnimalWander>(out var cow))
-                {
-                    cow.GoToFeeder(transform.position);
-                }
-                // 2. Cek Komponen Kuda
-                else if (animal.TryGetComponent<HorseAI>(out var horse))
-                {
-                    horse.GoToFeeder(transform.position);
-                }
-                // ==================== FIX: PANGGIL HARIMAU KETIKA MAKANAN ADA ====================
-                else if (animal.TryGetComponent<TigerAI>(out var tiger))
-                {
-                    tiger.GoToFeeder(transform.position);
-                }
-                // =================================================================================
-            }
-        }
+        // Panggil fungsi kumpul semua hewan
+        CallAllAnimals();
 
         if (eatingAudioSource != null)
         {
@@ -146,30 +192,8 @@ public class FeedingTrough : MonoBehaviour
 
         UpdateAlertIcon();
 
-        if (targetAnimals != null)
-        {
-            foreach (GameObject animal in targetAnimals)
-            {
-                if (animal == null) continue;
-
-                // 1. Bubarkan Sapi
-                if (animal.TryGetComponent<AnimalWander>(out var cow))
-                {
-                    cow.ResumeWandering();
-                }
-                // 2. Bubarkan Kuda
-                else if (animal.TryGetComponent<HorseAI>(out var horse))
-                {
-                    horse.ResumeWandering();
-                }
-                // ==================== FIX: BUBARKAN HARIMAU KETIKA MAKANAN HABIS ====================
-                else if (animal.TryGetComponent<TigerAI>(out var tiger))
-                {
-                    tiger.ResumeWandering();
-                }
-                // ====================================================================================
-            }
-        }
+        // Bubarkan semua hewan jika makanan habis
+        DismissAllAnimals();
 
         if (eatingAudioSource != null)
         {
