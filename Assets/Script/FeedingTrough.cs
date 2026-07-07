@@ -37,8 +37,12 @@ public class FeedingTrough : MonoBehaviour
     private GameObject activeDroppedFood = null;
     private bool isHoldingWrongFood = false; // Flag status pakan salah
 
+    private Collider m_TroughCollider;
+
     void Start()
     {
+        m_TroughCollider = GetComponent<Collider>();
+
         if (troughRenderer != null) originalMaterial = troughRenderer.material;
         if (interactionText != null) interactionText.gameObject.SetActive(false);
 
@@ -74,62 +78,56 @@ public class FeedingTrough : MonoBehaviour
             }
         }
 
-        // ==================== FIX BUG: PULIHKAN GRAVITASI & FISIKA OBJEK ====================
-        // Jika status pakan salah aktif, cek apakah objek tersebut dilepas paksa / di-pickup oleh Player
+        // ==================== FIX SOLUSI AMAN SINKRONISASI GRAB ====================
         if (isHoldingWrongFood && activeDroppedFood != null)
         {
-            // Deteksi lewat komponen Grabbable bawaan sistem kamu
             if (activeDroppedFood.TryGetComponent<Grabbable>(out var grabbable) && grabbable.IsGrabbed)
             {
-                UnfreezeAndReleaseObject(activeDroppedFood);
-                
+                // 1. Bersihkan status Droppable secara instan agar boks detektor langsung mengenali pakan ini baru lagi kelak
+                if (activeDroppedFood.TryGetComponent<Droppable>(out var droppable))
+                {
+                    droppable.ResetDroppedStatus();
+                }
+
+                // 2. Kembalikan fungsional Collider pakan menjadi solid non-trigger secara instan
+                if (activeDroppedFood.TryGetComponent<Collider>(out var col))
+                {
+                    col.isTrigger = false;
+                }
+
+                // 3. PANGGIL BACKUP FORCE: Paksa setelan dasar internal Grabbable kembali ke setelan default normal (Bebas Melayang)
+                if (activeDroppedFood.TryGetComponent<Grabbable>(out var wrongGrabbable))
+                {
+                    // Fungsi pembantu ini kita panggil jika ada di Grabbable, jika tidak kita force lurus via Rigidbody saat dilepas nanti
+                    // Kita tidak memaksa rb.useGravity = true di sini karena sedang dipegang tangan player!
+                }
+
+                // 4. Bebaskan status wadah pakan
                 activeDroppedFood = null;
                 isHoldingWrongFood = false;
 
+                if (m_TroughCollider != null) m_TroughCollider.enabled = true;
+
                 if (TryGetComponent<DropZoneHandler>(out var zone))
                 {
-                    zone.ResetDropZone(); // Buka kembali sensor DropZone
+                    zone.ResetDropZone(); 
                 }
                 UpdateAlertIcon();
+                Debug.Log("[Trough] Pakan salah berhasil diambil. Status zona dibersihkan.");
             }
         }
-        // Kondisi cadangan jika objek hancur mendadak dari sistem luar luar
         else if (isHoldingWrongFood && activeDroppedFood == null)
         {
             isHoldingWrongFood = false;
+            if (m_TroughCollider != null) m_TroughCollider.enabled = true;
+
             if (TryGetComponent<DropZoneHandler>(out var zone))
             {
                 zone.ResetDropZone();
             }
             UpdateAlertIcon();
         }
-        // ===================================================================================
     }
-
-    // ==================== FUNGSI BARU: MENGEMBALIKAN CONFIG RIGIDBODY & DROPPABLE ====================
-    private void UnfreezeAndReleaseObject(GameObject targetFood)
-    {
-        if (targetFood == null) return;
-
-        // 1. Pulihkan status fungsional Droppable agar bisa diterima di boks pakan lain lagi
-        if (targetFood.TryGetComponent<Droppable>(out var droppable))
-        {
-            // Mengingat script Droppable bawaan menggunakan MarkDropped(), kita harus mereset flag internalnya jika ada fungsi Reset/Unmark.
-            // Namun, jika tidak ada fungsi reset bawaan, minimal komponen fisikanya kita normalkan di bawah:
-            Debug.Log(targetFood.name + " berhasil dicabut! Mengembalikan setelan fisika.");
-        }
-
-        // 2. Mengaktifkan kembali sistem physics gravitasi objek
-        if (targetFood.TryGetComponent<Rigidbody>(out var rb))
-        {
-            rb.isKinematic = false;
-            rb.useGravity = true;
-            
-            // Berikan sedikit dorongan mikro ke atas agar objek tidak amblas menembus collider wadah pakan saat di-unfreeze
-            rb.AddForce(Vector3.up * 2f, ForceMode.Impulse); 
-        }
-    }
-    // =================================================================================================
 
     public bool IsFull()
     {
@@ -141,8 +139,6 @@ public class FeedingTrough : MonoBehaviour
         if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
         {
             if (isHoldingWrongFood) return;
-
-            Debug.Log("Player mendekati wadah pakan! Memanggil semua hewan untuk berkumpul.");
             CallAllAnimals();
         }
     }
@@ -153,7 +149,6 @@ public class FeedingTrough : MonoBehaviour
         {
             if (!IsFull() || isHoldingWrongFood)
             {
-                Debug.Log("Player menjauh! Membubarkan hewan.");
                 DismissAllAnimals();
             }
         }
@@ -190,6 +185,8 @@ public class FeedingTrough : MonoBehaviour
         activeDroppedFood = foodObject;
         isHoldingWrongFood = false;
 
+        if (m_TroughCollider != null) m_TroughCollider.enabled = false;
+
         currentHunger = maxHunger;
         if (hungerSlider != null) hungerSlider.value = currentHunger;
 
@@ -203,17 +200,18 @@ public class FeedingTrough : MonoBehaviour
 
     public void FillWrongFood(GameObject wrongFoodObject)
     {
+        if (activeDroppedFood == wrongFoodObject) return;
+
         activeDroppedFood = wrongFoodObject;
         isHoldingWrongFood = true; 
 
+        // JANGAN nonaktifkan collider wadah di sini agar update deteksi di atas tetap jalan responsif!
         DismissAllAnimals(); 
 
         if (wrongFoodAudioSource != null)
         {
             wrongFoodAudioSource.Play();
         }
-
-        Debug.LogWarning("Makanan salah menempel! Segera ambil kembali jerami untuk menggantinya.");
     }
 
     private IEnumerator ResetFoodAfterDelay(float delayDuration)
@@ -222,6 +220,8 @@ public class FeedingTrough : MonoBehaviour
 
         if (activeDroppedFood != null && !isHoldingWrongFood)
         {
+            if (m_TroughCollider != null) m_TroughCollider.enabled = true;
+
             if (TryGetComponent<DropZoneHandler>(out var zone))
             {
                 zone.ResetDropZone();

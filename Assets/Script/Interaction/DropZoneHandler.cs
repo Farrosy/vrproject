@@ -2,15 +2,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-// ==================== TAMBAHAN: DYNAMIC EVENT CLASS ====================
 [System.Serializable]
 public class DropEvent : UnityEvent<GameObject> { }
-// =======================================================================
 
-/// <summary>
-/// Handles drop-zone validation for Droppable objects.
-/// Accepts the correct object only after it has been released by the player.
-/// </summary>
 public class DropZoneHandler : MonoBehaviour
 {
     [Header("Drop Requirement")]
@@ -31,7 +25,6 @@ public class DropZoneHandler : MonoBehaviour
 
     private bool isCompleted;
     private Droppable lastWrongDroppable;
-    private bool isHandlingWrongFoodInternally = false; // Flag internal pembaca pakan salah
 
     private void OnTriggerEnter(Collider other)
     {
@@ -43,25 +36,6 @@ public class DropZoneHandler : MonoBehaviour
         TryAcceptDroppable(other);
     }
 
-    // ==================== FIX BARU: AUTO DETEKSI UN-DROP MAKANAN SALAH ====================
-    private void Update()
-    {
-        // Jika sedang menampung makanan yang salah, pantau statusnya setiap frame
-        if (isHandlingWrongFoodInternally && lastWrongDroppable != null)
-        {
-            if (lastWrongDroppable.TryGetComponent<Grabbable>(out var grabbable))
-            {
-                // Jika player mengambil kembali objek pakan yang salah tersebut
-                if (grabbable.IsGrabbed)
-                {
-                    Debug.Log("[DropZone] Makanan salah telah dicabut kembali oleh Player. Resetting zone.");
-                    ResetDropZone();
-                }
-            }
-        }
-    }
-    // =======================================================================================
-
     private void TryAcceptDroppable(Collider other)
     {
         if (isCompleted)
@@ -70,14 +44,12 @@ public class DropZoneHandler : MonoBehaviour
         }
 
         Droppable droppable = other.GetComponentInParent<Droppable>();
-
         if (droppable == null || droppable.IsDropped)
         {
             return;
         }
 
         Grabbable grabbable = droppable.GetComponent<Grabbable>();
-
         if (grabbable != null && grabbable.IsGrabbed)
         {
             SetStatus("Drop the object first");
@@ -95,9 +67,9 @@ public class DropZoneHandler : MonoBehaviour
 
     private void HandleWrongDrop(Droppable droppable)
     {
-        isCompleted = true; // Kunci zone pakan sementara
-        isHandlingWrongFoodInternally = true; // Tandai pakan salah sedang menempel
+        isCompleted = true; 
 
+        // 1. Eksekusi snap posisi dan pembekuan fisik secara instan
         SnapObjectIfNeeded(droppable.transform);
         FreezeObjectIfNeeded(droppable);
         droppable.MarkDropped();
@@ -111,11 +83,9 @@ public class DropZoneHandler : MonoBehaviour
     private void HandleCorrectDrop(Droppable droppable)
     {
         isCompleted = true;
-        isHandlingWrongFoodInternally = false;
 
         SnapObjectIfNeeded(droppable.transform);
         FreezeObjectIfNeeded(droppable);
-
         droppable.MarkDropped();
 
         if (_objectToActivateAfterDrop != null)
@@ -147,21 +117,21 @@ public class DropZoneHandler : MonoBehaviour
         }
 
         Rigidbody rigidbody = droppable.GetComponent<Rigidbody>();
-
         if (rigidbody == null)
         {
             return;
         }
 
+        // Paksa hentikan total sisa momentum gerak objek agar tidak amblas melorot
         #if UNITY_2023_1_OR_NEWER
         rigidbody.linearVelocity = Vector3.zero;
         #else
         rigidbody.velocity = Vector3.zero;
         #endif
-        
         rigidbody.angularVelocity = Vector3.zero;
+        
         rigidbody.useGravity = false;
-        rigidbody.isKinematic = true;
+        rigidbody.isKinematic = true; // Kunci total koordinatnya di snap point
     }
 
     private void SetStatus(string message)
@@ -170,7 +140,6 @@ public class DropZoneHandler : MonoBehaviour
         {
             _statusText.text = message;
         }
-
         Debug.Log(message);
     }
 
@@ -178,7 +147,6 @@ public class DropZoneHandler : MonoBehaviour
     {
         isCompleted = false;
         lastWrongDroppable = null;
-        isHandlingWrongFoodInternally = false; // Reset status internal
         SetStatus("Ready for next food delivery.");
     }
 }
