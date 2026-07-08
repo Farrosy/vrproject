@@ -2,31 +2,24 @@ using UnityEngine;
 
 public class GameDataManager : MonoBehaviour
 {
-    // Singleton agar skrip ini bisa dipanggil langsung dari skrip lain
-    public static GameDataManager Instance { get; private set; }
+    public static GameDataManager Instance;
 
     [Header("Status Kunjungan Kandang")]
     public bool sudahKunjungiSapi = false;
-    public bool sudahKunjungiHarimau = false;
     public bool sudahKunjungiKuda = false;
+    public bool sudahKunjungiHarimau = false;
 
-    void Awake()
+    private void Awake()
     {
-        // Memastikan hanya ada 1 GameDataManager di dalam game
+        // Sistem Singleton agar script ini mudah diakses dari script mana pun
         if (Instance == null)
         {
-            Instance = true ? this : null;
-            DontDestroyOnLoad(gameObject); // Data tidak akan hilang meski ganti scene
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         else
         {
             Destroy(gameObject);
         }
-    }
-
-    // Fungsi untuk mengecek apakah semua kandang sudah dikunjungi (untuk game flow)
-    public bool CekSemuaKandangSelesai()
-    {
-        return sudahKunjungiSapi && sudahKunjungiHarimau && sudahKunjungiKuda;
     }
 }

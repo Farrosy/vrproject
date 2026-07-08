@@ -36,17 +36,21 @@ public class KandangInfoInteract : MonoBehaviour
 
     void CekLogikaBukaPintu()
     {
-        if (GameDataManager.Instance.CekSemuaKandangSelesai())
+        // Menghubungkan fungsi pintu ke sistem checklist kunjungan baru kita
+        if (GameDataManager.Instance != null && 
+            GameDataManager.Instance.sudahKunjungiSapi && 
+            GameDataManager.Instance.sudahKunjungiKuda && 
+            GameDataManager.Instance.sudahKunjungiHarimau)
         {
             Debug.Log("Syarat Terpenuhi! Membuka Pintu Exit...");
-            
+
             // MENCARI OBJEK PINTU EXIT DAN MEMBUKANYA
             GameObject pintu = GameObject.FindGameObjectWithTag("PintuExit");
             if (pintu != null)
             {
                 // Alternatif 1: Matikan objek pintu biar langsung hilang/terbuka
-                pintu.SetActive(false); 
-                
+                pintu.SetActive(false);
+
                 // Alternatif 2: Jika pintu ada animasi, kamu bisa panggil trigger animasinya di sini
                 // pintu.GetComponent<Animator>().SetTrigger("BukaPintu");
             }
