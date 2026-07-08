@@ -136,10 +136,42 @@ public class FeedingTrough : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player") || other.GetComponent<FirstPersonController>() != null)
+        // 1. FILTER UTAMA: Cek apakah objek yang masuk (other) adalah AI hewan itu sendiri
+        bool apakahIniHewan = other.GetComponentInParent<HorseAI>() != null || 
+                            other.GetComponent<HorseAI>() != null || 
+                            other.GetComponentInParent<UnityEngine.AI.NavMeshAgent>() != null ||
+                            other.name.ToLower().Contains("cow") || 
+                            other.name.ToLower().Contains("tiger") || 
+                            other.name.ToLower().Contains("horse");
+
+        // 2. JIKALAU YANG MENYENTUH MANGKOK ADALAH HEWAN, LANGSUNG TOLAK DAN ABORKAN!
+        // Ini gunanya biar di awal game AI hewan tidak memicu fungsinya sendiri secara tidak sengaja
+        if (apakahIniHewan) 
         {
-            if (isHoldingWrongFood) return;
-            CallAllAnimals();
+            return; 
+        }
+
+        // 3. JIKALAU LOLOS (Artinya yang masuk adalah Player atau Objek Makanan asli), JALANKAN LOGIKA:
+        if (isHoldingWrongFood) return;
+        
+        // AI hewan baru akan dipanggil ke kandang SEKARANG (secara sah saat pakan ditaruh)
+        CallAllAnimals();
+
+        // Catat data ke gerbang exit secara sah
+        if (gameObject.name == "Prop_AnimalFeeder_Eat_Cow")
+        {
+            GameDataManager.sudahMakanSapi = true;
+            Debug.Log(">>> DATA ABSOLUT: Sapi sukses diberi makan secara sah! <<<");
+        }
+        else if (gameObject.name == "Prop_AnimalFeeder_Eat_Horse")
+        {
+            GameDataManager.sudahMakanKuda = true;
+            Debug.Log(">>> DATA ABSOLUT: Kuda sukses diberi makan secara sah! <<<");
+        }
+        else if (gameObject.name == "Prop_AnimalFeeder_Eat_Tiger")
+        {
+            GameDataManager.sudahMakanHarimau = true;
+            Debug.Log(">>> DATA ABSOLUT: Harimau sukses diberi makan secara sah! <<<");
         }
     }
 

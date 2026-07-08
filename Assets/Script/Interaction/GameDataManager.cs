@@ -9,6 +9,11 @@ public class GameDataManager : MonoBehaviour
     public bool sudahKunjungiKuda = false;
     public bool sudahKunjungiHarimau = false;
 
+    [Header("Status Memberi Makan")]
+    public static bool sudahMakanSapi = false;
+    public static bool sudahMakanKuda = false;
+    public static bool sudahMakanHarimau = false;
+
     private void Awake()
     {
         // Sistem Singleton agar script ini mudah diakses dari script mana pun
@@ -21,5 +26,12 @@ public class GameDataManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    // Fungsi baru untuk mengecek apakah 3 kandang sudah diberi makan semuanya
+    // Fungsi ini mengembalikan nilai true/false yang akan dibaca oleh skrip pintu
+    public bool ApakahSemuaSudahDiberiMakan()
+    {
+        return sudahMakanSapi && sudahMakanKuda && sudahMakanHarimau;
     }
 }
