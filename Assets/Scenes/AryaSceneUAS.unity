@@ -9844,7 +9844,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: a1dd2de132e4a145b950b29f50a7aac6, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: b28a66e929f7ef444b2b7e8e483b3926, type: 2}
   m_BuildHeightMesh: 0
 --- !u!4 &845050649
 Transform:
@@ -21381,9 +21381,6 @@ MonoBehaviour:
   sudahKunjungiSapi: 0
   sudahKunjungiKuda: 0
   sudahKunjungiHarimau: 0
-  sudahMakanSapi: 0
-  sudahMakanKuda: 0
-  sudahMakanHarimau: 0
 --- !u!4 &1732399065
 Transform:
   m_ObjectHideFlags: 0
