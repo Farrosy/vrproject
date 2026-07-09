@@ -1,7 +1,7 @@
 fileFormatVersion: 2
-guid: 288e7e3269df81242897312eec673812
+guid: b8d33cb171e2ecf49a3ea1b2949cd33d
 ModelImporter:
-  serializedVersion: 22200
+  serializedVersion: 24200
   internalIDToNameTable: []
   externalObjects: {}
   materials:
@@ -16,8 +16,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -58,6 +56,9 @@ ModelImporter:
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
     optimizeBones: 1
+    generateMeshLods: 0
+    meshLodGenerationFlags: 0
+    maximumMeshLod: -1
     meshOptimizationFlags: -1
     indexFormat: 0
     secondaryUVAngleDistortion: 8
@@ -107,10 +108,3 @@ ModelImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 350444
-  packageName: Romanian Wooden Gazebo
-  packageVersion: 1.0
-  assetPath: Assets/Blue Olive Studio/Romanian Wooden Gazebo/Source/Mesh/Gazebo.fbx
-  uploadId: 834786
